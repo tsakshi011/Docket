@@ -33,10 +33,10 @@ class ParsedSyllabus(BaseModel):
 class StudyPlan(BaseModel):
     course_name: str
     semester: str
-    syllabus_events: list[SyllabusEvent]
-    study_blocks: list[StudyBlock]
-    weekly_summary: list[str]  # high-level per-week summary
-    warnings: list[str]  # e.g., "Heavy week: 3 deadlines on Nov 10-14"
+    syllabus_events: list[SyllabusEvent] = []
+    study_blocks: list[StudyBlock] = []
+    weekly_summary: list[str] = []  # high-level per-week summary
+    warnings: list[str] = []  # e.g., "Heavy week: 3 deadlines on Nov 10-14"
 
 
 class ParseRequest(BaseModel):
@@ -47,8 +47,8 @@ class ParseResponse(BaseModel):
     course_name: str
     semester: str
     instructor: Optional[str] = None
-    syllabus_events: list[SyllabusEvent]
-    study_blocks: list[StudyBlock]
-    weekly_summary: list[str]
-    warnings: list[str]
-    raw_text_preview: str
+    syllabus_events: list[SyllabusEvent] = []
+    study_blocks: list[StudyBlock] = []
+    weekly_summary: list[str] = []
+    warnings: list[str] = []
+    raw_text_preview: str = ""

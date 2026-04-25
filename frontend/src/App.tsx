@@ -4,8 +4,9 @@ import HeroSection from './components/HeroSection';
 import FileUpload from './components/FileUpload';
 import StudyPlanView from './components/StudyPlanView';
 import ScheduleView from './components/ScheduleView';
-import { parseSyllabus, exportIcs } from './api';
-import type { ParseResponse, AppStep } from './types';
+import { parseSyllabus, exportIcs, exportToGoogleCalendar } from './api';
+import { useAuth } from './useAuth';
+import type { ParseResponse, AppStep, CalendarExportResponse } from './types';
 
 type Page = 'home' | 'upload' | 'schedule';
 
@@ -15,6 +16,10 @@ export default function App() {
   const [data, setData] = useState<ParseResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [gcalExporting, setGcalExporting] = useState(false);
+  const [gcalResult, setGcalResult] = useState<CalendarExportResponse | null>(null);
+
+  const { googleAccessToken, signInWithGoogle } = useAuth();
 
   const handleSubmit = async (f: File) => {
     setFile(f);
@@ -53,11 +58,44 @@ export default function App() {
     }
   };
 
+  const handleExportGcal = async () => {
+    if (!data) return;
+
+    if (!googleAccessToken) {
+      try {
+        await signInWithGoogle();
+      } catch {
+        alert('Google sign-in is required to export to Google Calendar.');
+      }
+      return;
+    }
+
+    setGcalExporting(true);
+    setError(null);
+    try {
+      const result = await exportToGoogleCalendar({
+        course_name: data.course_name,
+        access_token: googleAccessToken,
+        syllabus_events: data.syllabus_events,
+        study_blocks: data.study_blocks,
+      });
+      setGcalResult(result);
+    } catch (err: unknown) {
+      const axiosDetail =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      const message = axiosDetail || (err instanceof Error ? err.message : 'Failed to export to Google Calendar.');
+      setError(message);
+    } finally {
+      setGcalExporting(false);
+    }
+  };
+
   const handleReset = () => {
     setStep('upload');
     setData(null);
     setFile(null);
     setError(null);
+    setGcalResult(null);
   };
 
   const handleLoadDemo = () => {
@@ -143,6 +181,9 @@ export default function App() {
               <StudyPlanView
                 data={data}
                 onExportIcs={handleExportIcs}
+                onExportGcal={handleExportGcal}
+                gcalExporting={gcalExporting}
+                gcalResult={gcalResult}
                 onReset={handleReset}
               />
             )}

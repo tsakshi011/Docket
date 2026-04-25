@@ -54,14 +54,11 @@ class ParseResponse(BaseModel):
     raw_text_preview: str
 
 
-class CalendarExportRequest(BaseModel):
+class PlanStoreRequest(BaseModel):
     course_name: str
-    access_token: str
     syllabus_events: list[SyllabusEvent]
     study_blocks: list[StudyBlock]
 
 
-class CalendarExportResponse(BaseModel):
-    calendar_id: str
-    calendar_url: str
-    events_created: int
+class PlanStoreResponse(BaseModel):
+    plan_id: str

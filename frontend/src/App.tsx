@@ -3,9 +3,8 @@ import NavBar from './components/NavBar';
 import HeroSection from './components/HeroSection';
 import FileUpload from './components/FileUpload';
 import StudyPlanView from './components/StudyPlanView';
-import { parseSyllabus, exportIcs, exportToGoogleCalendar } from './api';
-import { useAuth } from './useAuth';
-import type { ParseResponse, AppStep, CalendarExportResponse } from './types';
+import { parseSyllabus, exportIcs, storePlan, buildGcalSubscribeUrl } from './api';
+import type { ParseResponse, AppStep } from './types';
 
 type Page = 'home' | 'upload' | 'tasks' | 'schedule';
 
@@ -16,9 +15,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [gcalExporting, setGcalExporting] = useState(false);
-  const [gcalResult, setGcalResult] = useState<CalendarExportResponse | null>(null);
-
-  const { googleAccessToken, signInWithGoogle } = useAuth();
+  const [gcalUrl, setGcalUrl] = useState<string | null>(null);
 
   const handleSubmit = async (f: File) => {
     setFile(f);
@@ -59,29 +56,21 @@ export default function App() {
   const handleExportGcal = async () => {
     if (!data) return;
 
-    if (!googleAccessToken) {
-      try {
-        await signInWithGoogle();
-      } catch {
-        alert('Google sign-in is required to export to Google Calendar.');
-      }
-      return;
-    }
-
     setGcalExporting(true);
     setError(null);
     try {
-      const result = await exportToGoogleCalendar({
+      const { plan_id } = await storePlan({
         course_name: data.course_name,
-        access_token: googleAccessToken,
         syllabus_events: data.syllabus_events,
         study_blocks: data.study_blocks,
       });
-      setGcalResult(result);
+      const url = buildGcalSubscribeUrl(plan_id);
+      setGcalUrl(url);
+      window.open(url, '_blank');
     } catch (err: unknown) {
       const axiosDetail =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      const message = axiosDetail || (err instanceof Error ? err.message : 'Failed to export to Google Calendar.');
+      const message = axiosDetail || (err instanceof Error ? err.message : 'Failed to prepare Google Calendar export.');
       setError(message);
     } finally {
       setGcalExporting(false);
@@ -93,7 +82,7 @@ export default function App() {
     setData(null);
     setFile(null);
     setError(null);
-    setGcalResult(null);
+    setGcalUrl(null);
   };
 
   const handleNavigate = (target: string) => {
@@ -149,7 +138,7 @@ export default function App() {
                 onExportIcs={handleExportIcs}
                 onExportGcal={handleExportGcal}
                 gcalExporting={gcalExporting}
-                gcalResult={gcalResult}
+                gcalUrl={gcalUrl}
                 onReset={handleReset}
               />
             )}

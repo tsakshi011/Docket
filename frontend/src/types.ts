@@ -34,15 +34,12 @@ export interface ParseResponse {
 
 export type AppStep = 'upload' | 'processing' | 'review' | 'success';
 
-export interface CalendarExportRequest {
+export interface PlanStoreRequest {
   course_name: string;
-  access_token: string;
   syllabus_events: SyllabusEvent[];
   study_blocks: StudyBlock[];
 }
 
-export interface CalendarExportResponse {
-  calendar_id: string;
-  calendar_url: string;
-  events_created: number;
+export interface PlanStoreResponse {
+  plan_id: string;
 }

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ParseResponse, CalendarExportRequest, CalendarExportResponse } from './types';
+import type { ParseResponse, PlanStoreRequest, PlanStoreResponse } from './types';
 
 const API_BASE = import.meta.env.PROD
   ? 'https://syllabus-to-calendar-vfegtvvl.fly.dev/api'
@@ -52,13 +52,19 @@ export function generateGcalLink(
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-export async function exportToGoogleCalendar(
-  req: CalendarExportRequest,
-): Promise<CalendarExportResponse> {
-  const response = await axios.post<CalendarExportResponse>(
-    `${API_BASE}/calendar/export`,
+export async function storePlan(req: PlanStoreRequest): Promise<PlanStoreResponse> {
+  const response = await axios.post<PlanStoreResponse>(
+    `${API_BASE}/plans`,
     req,
-    { timeout: 120000 },
+    { timeout: 30000 },
   );
   return response.data;
+}
+
+export function buildGcalSubscribeUrl(planId: string): string {
+  const feedBase = import.meta.env.PROD
+    ? 'https://syllabus-to-calendar-vfegtvvl.fly.dev'
+    : window.location.origin;
+  const icsUrl = `${feedBase}/api/plans/${planId}/calendar.ics`;
+  return `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(icsUrl)}`;
 }

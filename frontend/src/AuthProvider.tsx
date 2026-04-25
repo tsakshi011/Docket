@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    console.log('[Auth] signInWithGoogle called, auth:', !!auth, 'googleProvider:', !!googleProvider);
     if (!auth || !googleProvider) {
       console.error('Firebase is not initialized. Check that VITE_FIREBASE_* env vars are set and restart the dev server.');
       alert('Firebase is not configured. Make sure your .env file has all VITE_FIREBASE_* variables and restart the dev server.');

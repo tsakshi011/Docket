@@ -12,7 +12,6 @@ load_dotenv()
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
-# Groq free-tier limit for llama-3.3-70b-versatile is 12,000 TPM.
 # Reserve tokens for system prompt (~600) and response (~3,000).
 MAX_USER_TOKENS = 6_000
 CHARS_PER_TOKEN_ESTIMATE = 4
@@ -240,10 +239,7 @@ Generate an optimal study plan with preparation blocks for each event. Break dow
     )
 
     raw = json.loads(response.choices[0].message.content)
-    # The LLM often returns syllabus_events as plain strings instead of full
-    # event objects.  run_agent_pipeline overwrites this field with the
-    # properly parsed events, so replace it with an empty list to avoid
-    # Pydantic validation errors.
+
     raw["syllabus_events"] = []
     return StudyPlan(**raw)
 
@@ -253,7 +249,7 @@ def run_agent_pipeline(syllabus_text: str) -> StudyPlan:
     # Step 1: Extract events from syllabus
     parsed = extract_events(syllabus_text)
 
-    # Pause between pipeline steps to respect Groq's TPM rate limit.
+    # Pause between pipeline steps Groq's TPM rate limit.
     time.sleep(15)
 
     # Step 2: Generate autonomous study plan

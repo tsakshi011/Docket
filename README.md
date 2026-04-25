@@ -1,4 +1,4 @@
-# SyllabusSync
+# Docket
 
 **AI-powered syllabus parser and autonomous study plan generator.**
 
@@ -8,7 +8,7 @@ Upload your course syllabus (PDF) and our AI agent doesn't just extract dates �
 
 Traditional automation: "Read dates from PDF → put them on calendar."
 
-**SyllabusSync's AI agent:**
+**Docket's AI agent:**
 1. **Extracts** all events from unstructured syllabus text (handles tables, relative dates like "Week 5", ambiguous references)
 2. **Reasons** about each assignment — a research paper gets broken into: topic selection → research → outline → first draft → revision → final review
 3. **Plans autonomously** — schedules study sessions before exams, spaces prep work evenly, respects workload balance

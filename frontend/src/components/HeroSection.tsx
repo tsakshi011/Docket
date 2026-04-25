@@ -7,7 +7,7 @@ interface HeroSectionProps {
 
 export default function HeroSection({ onNavigate }: HeroSectionProps) {
   return (
-    <div className="flex-1 flex flex-col items-start justify-center px-6 md:px-16 lg:px-24 pb-12 text-left relative overflow-hidden">
+    <div className="flex-1 flex flex-col items-start justify-center px-6 md:px-16 lg:px-24 py-4 text-left relative overflow-hidden">
       {/* Outer scattered stars */}
       <img src={starImg} alt="" className="absolute top-6 left-[4%] w-16 h-16 md:w-24 md:h-24 opacity-60 pointer-events-none animate-float-delayed object-contain rotate-12" />
       <img src={starImg} alt="" className="absolute top-10 right-[7%] w-20 h-20 md:w-28 md:h-28 opacity-70 pointer-events-none animate-float-slow object-contain -rotate-6" />
@@ -26,17 +26,17 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
       <img src={starImg} alt="" className="absolute bottom-[55%] left-[30%] w-6 h-6 md:w-8 md:h-8 opacity-35 pointer-events-none animate-float-slow object-contain rotate-[70deg]" />
 
       {/* Heading */}
-      <div className="mb-2 md:mb-4 relative z-10 mt-auto">
-        <p className="text-[#FFFBF1] text-base md:text-lg font-medium font-[Inter] mb-2">
+      <div className="mb-0 relative z-10">
+        <p className="text-[#FFFBF1] text-xl md:text-2xl lg:text-3xl font-medium font-[Inter] mb-2">
           What's next on the
         </p>
-        <h1 className="font-[Inter] text-6xl md:text-8xl lg:text-[120px] font-bold text-[#FFFBF1] leading-none tracking-tight">
+        <h1 className="font-[Inter] text-8xl md:text-[11rem] lg:text-[14rem] font-bold text-[#FFFBF1] leading-none tracking-tight">
           Docket?
         </h1>
       </div>
 
       {/* Typewriter image with nearby stars */}
-      <div className="relative z-10 w-full max-w-md md:max-w-lg lg:max-w-xl self-center">
+      <div className="relative z-10 w-full max-w-xs md:max-w-lg lg:max-w-xl self-center -mt-6 md:-mt-10">
         <img
           src={typewriterImg}
           alt="Vintage typewriter"
@@ -54,10 +54,10 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
       </div>
 
       {/* CTA button */}
-      <div className="mt-4 mb-auto relative z-10 self-center">
+      <div className="-mt-28 relative z-20 self-center">
         <button
           onClick={() => onNavigate('upload')}
-          className="px-8 py-3 bg-[#485C11] text-white rounded-full font-medium text-base hover:bg-[#3a4a0d] transition-colors shadow-lg"
+          className="px-12 py-4 bg-[#485C11] text-white rounded-full font-semibold text-lg md:text-xl hover:bg-[#3a4a0d] transition-colors shadow-lg"
         >
           Upload Syllabus
         </button>

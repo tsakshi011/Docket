@@ -13,6 +13,9 @@ import {
   FlaskConical,
   PenLine,
   CheckCircle2,
+  Plus,
+  Trash2,
+  Circle,
 } from 'lucide-react';
 import type { ParseResponse, StudyBlock } from '../types';
 import { generateGcalLink } from '../api';
@@ -22,7 +25,11 @@ interface StudyPlanViewProps {
   onExportIcs: () => void;
   onExportGcal: () => void;
   gcalExporting: boolean;
+<<<<<<< HEAD
   gcalUrl: string | null;
+=======
+  gcalResult: { calendar_url: string; events_created: number } | null;
+>>>>>>> 5e078a0fb8605bca5ad6a1298f51f11e70d11d99
   onReset: () => void;
 }
 
@@ -60,9 +67,38 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
+<<<<<<< HEAD
 export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalUrl, onReset }: StudyPlanViewProps) {
+=======
+interface TaskItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset }: StudyPlanViewProps) {
+>>>>>>> 5e078a0fb8605bca5ad6a1298f51f11e70d11d99
   const [showStudyBlocks, setShowStudyBlocks] = useState(true);
-  const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks'>('timeline');
+  const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks' | 'tasks'>('timeline');
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [newTask, setNewTask] = useState('');
+
+  const addTask = () => {
+    const text = newTask.trim();
+    if (!text) return;
+    setTasks([...tasks, { id: crypto.randomUUID(), text, completed: false }]);
+    setNewTask('');
+  };
+
+  const toggleTask = (id: string) => {
+    setTasks(tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+  };
+
+  const deleteTask = (id: string) => {
+    setTasks(tasks.filter((t) => t.id !== id));
+  };
+
+  const completedCount = tasks.filter((t) => t.completed).length;
 
   const allItems = [
     ...data.syllabus_events.map((e) => ({ ...e, kind: 'event' as const })),
@@ -131,6 +167,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
             New Upload
           </button>
         </div>
+<<<<<<< HEAD
         {gcalUrl && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between">
             <span className="text-sm text-green-800">
@@ -138,11 +175,24 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
             </span>
             <a
               href={gcalUrl}
+=======
+        {gcalResult && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-sm text-green-800">
+              Created {gcalResult.events_created} events in your Google Calendar!
+            </span>
+            <a
+              href={gcalResult.calendar_url}
+>>>>>>> 5e078a0fb8605bca5ad6a1298f51f11e70d11d99
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-medium text-green-700 hover:text-green-900 flex items-center gap-1"
             >
+<<<<<<< HEAD
               Open Google Calendar <ExternalLink className="w-3 h-3" />
+=======
+              Open Calendar <ExternalLink className="w-3 h-3" />
+>>>>>>> 5e078a0fb8605bca5ad6a1298f51f11e70d11d99
             </a>
           </div>
         )}
@@ -150,7 +200,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
 
       {/* Tabs */}
       <div className="flex border-b">
-        {(['timeline', 'events', 'blocks'] as const).map((tab) => (
+        {(['timeline', 'events', 'blocks', 'tasks'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -160,7 +210,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            {tab === 'timeline' ? 'Timeline' : tab === 'events' ? `Events (${data.syllabus_events.length})` : `Study Plan (${data.study_blocks.length})`}
+            {tab === 'timeline' ? 'Timeline' : tab === 'events' ? `Events (${data.syllabus_events.length})` : tab === 'blocks' ? `Study Plan (${data.study_blocks.length})` : `Tasks${tasks.length > 0 ? ` (${completedCount}/${tasks.length})` : ''}`}
           </button>
         ))}
       </div>
@@ -300,6 +350,86 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Tasks checklist */}
+      {activeTab === 'tasks' && (
+        <div className="space-y-4">
+          {/* Add task input */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addTask()}
+              placeholder="Add a new task..."
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-[#485C11]/20 bg-white/80 text-[#485C11] placeholder-[#485C11]/40 focus:outline-none focus:border-[#485C11] transition-colors font-[Inter]"
+            />
+            <button
+              onClick={addTask}
+              className="px-4 py-3 bg-[#485C11] text-[#FFFBF1] rounded-xl hover:bg-[#3a4a0d] transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Progress bar */}
+          {tasks.length > 0 && (
+            <div className="w-full bg-[#485C11]/10 rounded-full h-2">
+              <div
+                className="bg-[#485C11] h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(completedCount / tasks.length) * 100}%` }}
+              />
+            </div>
+          )}
+
+          {/* Task list */}
+          {tasks.length === 0 ? (
+            <div className="text-center py-8 space-y-2">
+              <p className="text-[#485C11]/50">No tasks yet</p>
+              <p className="text-[#485C11]/40 text-sm">Add a task above to get started!</p>
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {tasks.map((task) => (
+                <li
+                  key={task.id}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all duration-200 ${
+                    task.completed
+                      ? 'bg-[#485C11]/5 border-[#485C11]/10'
+                      : 'bg-white/80 border-[#485C11]/20 hover:border-[#485C11]/40'
+                  }`}
+                >
+                  <button
+                    onClick={() => toggleTask(task.id)}
+                    className="text-[#485C11] flex-shrink-0"
+                  >
+                    {task.completed ? (
+                      <CheckCircle2 className="w-6 h-6 text-[#485C11]" />
+                    ) : (
+                      <Circle className="w-6 h-6 text-[#485C11]/40" />
+                    )}
+                  </button>
+                  <span
+                    className={`flex-1 font-[Inter] text-sm ${
+                      task.completed
+                        ? 'line-through text-[#485C11]/40'
+                        : 'text-[#485C11]'
+                    }`}
+                  >
+                    {task.text}
+                  </span>
+                  <button
+                    onClick={() => deleteTask(task.id)}
+                    className="text-[#485C11]/30 hover:text-red-500 transition-colors flex-shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

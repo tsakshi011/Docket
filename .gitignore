@@ -15,3 +15,7 @@ frontend/dist/
 
 # OS
 .DS_Store
+
+# JSON
+package-lock.json
+package.json

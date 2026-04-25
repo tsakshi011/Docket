@@ -13,13 +13,13 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-GROQ_MODEL = "llama-3.3-70b-versatile"
-GROQ_FALLBACK_MODEL = "llama-3.1-8b-instant"
+#GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "llama-3.1-8b-instant"
 
 # Reserve tokens for system prompt (~600) and response (~3,000).
-MAX_USER_TOKENS = 6_000
+#MAX_USER_TOKENS = 6_000
 # The 8B fallback model has a 6 000 TPM cap; keep user text well under that.
-FALLBACK_MAX_USER_TOKENS = 1_500
+MAX_USER_TOKENS = 1_500
 CHARS_PER_TOKEN_ESTIMATE = 4
 
 EXTRACT_SYSTEM_PROMPT = """You are an expert academic syllabus parser. Given the raw text of a course syllabus, extract ALL important dates and deadlines.
@@ -232,11 +232,11 @@ def extract_events(syllabus_text: str) -> ParsedSyllabus:
     it retries with the smaller fallback model and tighter chunk sizes.
     """
     client = _get_client()
-    try:
-        return _extract_events_with_model(
-            client, syllabus_text, GROQ_MODEL, MAX_USER_TOKENS,
-        )
-    except (RateLimitError, APIStatusError) as exc:
+    
+    return _extract_events_with_model(
+        client, syllabus_text, GROQ_MODEL, MAX_USER_TOKENS,
+    )
+    '''except (RateLimitError, APIStatusError) as exc:
         if not _is_rate_or_size_error(exc):
             raise
         logger.warning(
@@ -245,7 +245,7 @@ def extract_events(syllabus_text: str) -> ParsedSyllabus:
         )
         return _extract_events_with_model(
             client, syllabus_text, GROQ_FALLBACK_MODEL, FALLBACK_MAX_USER_TOKENS,
-        )
+        )'''
 
 
 def generate_study_plan(parsed: ParsedSyllabus) -> StudyPlan:
@@ -273,14 +273,14 @@ Generate an optimal study plan with preparation blocks for each event. Break dow
         {"role": "user", "content": user_prompt},
     ]
 
-    try:
-        response = client.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=messages,
-            response_format={"type": "json_object"},
-            temperature=0.1,
-        )
-    except (RateLimitError, APIStatusError) as exc:
+    
+    response = client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=messages,
+        response_format={"type": "json_object"},
+        temperature=0.1,
+    )
+    '''except (RateLimitError, APIStatusError) as exc:
         if not _is_rate_or_size_error(exc):
             raise
         logger.warning(
@@ -292,7 +292,7 @@ Generate an optimal study plan with preparation blocks for each event. Break dow
             messages=messages,
             response_format={"type": "json_object"},
             temperature=0.1,
-        )
+        )'''
 
     raw = json.loads(response.choices[0].message.content)
     raw.setdefault("weekly_summary", [])

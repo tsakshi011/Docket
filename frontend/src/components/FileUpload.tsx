@@ -27,41 +27,40 @@ export default function FileUpload({ onSubmit, isLoading }: FileUploadProps) {
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Syllabus<span className="text-indigo-600">Sync</span>
+        <h1 className="font-[Playfair_Display] text-3xl font-bold text-[#485C11]">
+          Upload Your <span className="text-[#485C11]/80">Syllabus</span>
         </h1>
-        <p className="text-gray-500">
+        <p className="text-[#485C11]/70">
           Upload your syllabus. Our AI agent breaks down every assignment, schedules study sessions, and builds your personalized academic plan.
         </p>
       </div>
 
-      {/* File Drop Zone */}
       <div
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors ${
           dragOver
-            ? 'border-indigo-500 bg-indigo-50'
+            ? 'border-[#485C11] bg-[#d4ecd4]'
             : file
-            ? 'border-green-400 bg-green-50'
-            : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'
+            ? 'border-[#485C11] bg-[#dff0df]'
+            : 'border-[#485C11]/40 hover:border-[#485C11] hover:bg-[#d4ecd4]'
         }`}
         onClick={() => document.getElementById('file-input')?.click()}
       >
         {file ? (
           <div className="flex items-center justify-center gap-3">
-            <FileText className="w-8 h-8 text-green-600" />
+            <FileText className="w-8 h-8 text-[#485C11]" />
             <div className="text-left">
-              <p className="font-medium text-gray-900">{file.name}</p>
-              <p className="text-sm text-gray-500">{(file.size / 1024).toFixed(0)} KB</p>
+              <p className="font-medium text-[#485C11]">{file.name}</p>
+              <p className="text-sm text-[#485C11]/60">{(file.size / 1024).toFixed(0)} KB</p>
             </div>
           </div>
         ) : (
           <div className="space-y-2">
-            <Upload className="w-10 h-10 text-gray-400 mx-auto" />
-            <p className="text-gray-600 font-medium">Drop your syllabus PDF here</p>
-            <p className="text-sm text-gray-400">or click to browse</p>
+            <Upload className="w-10 h-10 text-[#485C11]/50 mx-auto" />
+            <p className="text-[#485C11] font-medium">Drop your syllabus PDF here</p>
+            <p className="text-sm text-[#485C11]/50">or click to browse</p>
           </div>
         )}
         <input
@@ -76,11 +75,10 @@ export default function FileUpload({ onSubmit, isLoading }: FileUploadProps) {
         />
       </div>
 
-      {/* Submit */}
       <button
         onClick={handleSubmit}
         disabled={!file || isLoading}
-        className="w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+        className="w-full py-3 px-4 bg-[#485C11] text-white font-medium rounded-full hover:bg-[#3a4a0d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
       >
         {isLoading ? (
           <>

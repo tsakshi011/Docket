@@ -70,8 +70,8 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center space-y-1">
-        <h1 className="text-2xl font-bold text-gray-900">{data.course_name}</h1>
-        <p className="text-gray-500">{data.semester}{data.instructor ? ` — ${data.instructor}` : ''}</p>
+        <h1 className="font-[Playfair_Display] text-2xl font-bold text-[#485C11]">{data.course_name}</h1>
+        <p className="text-[#485C11]/70">{data.semester}{data.instructor ? ` — ${data.instructor}` : ''}</p>
       </div>
 
       {/* Warnings */}
@@ -90,16 +90,16 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white border rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-indigo-600">{data.syllabus_events.length}</p>
-          <p className="text-xs text-gray-500">Syllabus Events</p>
+          <p className="text-2xl font-bold text-[#485C11]">{data.syllabus_events.length}</p>
+          <p className="text-xs text-[#485C11]/60">Syllabus Events</p>
         </div>
         <div className="bg-white border rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-green-600">{data.study_blocks.length}</p>
-          <p className="text-xs text-gray-500">Study Blocks Generated</p>
+          <p className="text-2xl font-bold text-[#485C11]">{data.study_blocks.length}</p>
+          <p className="text-xs text-[#485C11]/60">Study Blocks Generated</p>
         </div>
         <div className="bg-white border rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-purple-600">{data.weekly_summary.length}</p>
-          <p className="text-xs text-gray-500">Weeks Planned</p>
+          <p className="text-2xl font-bold text-[#485C11]">{data.weekly_summary.length}</p>
+          <p className="text-xs text-[#485C11]/60">Weeks Planned</p>
         </div>
       </div>
 
@@ -107,14 +107,14 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
       <div className="flex gap-3">
         <button
           onClick={onExportIcs}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#485C11] text-white rounded-full hover:bg-[#3a4a0d] transition-colors font-medium"
         >
           <Download className="w-4 h-4" />
           Download .ics File
         </button>
         <button
           onClick={onReset}
-          className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          className="px-4 py-2.5 border border-[#485C11]/40 text-[#485C11] rounded-full hover:bg-[#d4ecd4] transition-colors font-medium"
         >
           New Upload
         </button>
@@ -128,7 +128,7 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab
-                ? 'border-indigo-600 text-indigo-600'
+                ? 'border-[#485C11] text-[#485C11]'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -164,7 +164,7 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
                     <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
                   )}
                   {!isEvent && (
-                    <p className="text-xs text-indigo-500 mt-0.5">
+                    <p className="text-xs text-[#485C11]/60 mt-0.5">
                       For: {block.related_event}
                     </p>
                   )}
@@ -186,7 +186,7 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-400 hover:text-indigo-600"
+                    className="text-gray-400 hover:text-[#485C11]"
                     title="Add to Google Calendar"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -222,7 +222,7 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
                 href={generateGcalLink(ev.title, ev.date, ev.time, ev.duration_minutes, ev.description)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-indigo-600 shrink-0"
+                className="text-gray-400 hover:text-[#485C11] shrink-0"
               >
                 <ExternalLink className="w-4 h-4" />
               </a>
@@ -257,7 +257,7 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
                   </span>
                 </div>
                 {block.description && <p className="text-xs text-gray-500 mt-0.5">{block.description}</p>}
-                <p className="text-xs text-indigo-500 mt-0.5">For: {block.related_event}</p>
+                <p className="text-xs text-[#485C11]/60 mt-0.5">For: {block.related_event}</p>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <span className="text-xs text-gray-400">{block.duration_minutes}m</span>
@@ -265,7 +265,7 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
                   href={generateGcalLink(block.title, block.date, block.time, block.duration_minutes, block.description)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-indigo-600"
+                  className="text-gray-400 hover:text-[#485C11]"
                 >
                   <ExternalLink className="w-4 h-4" />
                 </a>

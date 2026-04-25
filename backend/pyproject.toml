@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.8.0",
     "python-dotenv>=1.0.0",
     "icalendar>=6.0.0",
+    "motor>=3.5.0",
 ]
 
 [project.optional-dependencies]

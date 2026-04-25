@@ -36,7 +36,7 @@ export default function NavBar({ currentPage, onNavigate }: NavBarProps) {
       {/* Desktop: logo centered (tablet+) */}
       <button
         onClick={() => onNavigate('home')}
-        className="hidden lg:block absolute left-1/2 -translate-x-1/2 font-[Playfair_Display] text-lg font-bold text-[#485C11] tracking-wide"
+        className="hidden lg:block absolute left-1/2 -translate-x-1/2 font-[Inter] text-lg font-bold text-[#485C11] tracking-wide"
       >
         The Clerk's Desk
       </button>
@@ -52,7 +52,7 @@ export default function NavBar({ currentPage, onNavigate }: NavBarProps) {
       <div className="md:hidden flex items-center justify-between w-full">
         <button
           onClick={() => onNavigate('home')}
-          className="font-[Playfair_Display] text-lg font-bold text-[#485C11]"
+          className="font-[Inter] text-lg font-bold text-[#485C11]"
         >
           Area
         </button>

@@ -27,7 +27,7 @@ export default function FileUpload({ onSubmit, isLoading }: FileUploadProps) {
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <div className="text-center space-y-2">
-        <h1 className="font-[Playfair_Display] text-3xl font-bold text-[#485C11]">
+        <h1 className="font-[Inter] text-3xl font-bold text-[#485C11]">
           Upload Your <span className="text-[#485C11]/80">Syllabus</span>
         </h1>
         <p className="text-[#485C11]/70">

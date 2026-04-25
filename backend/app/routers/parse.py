@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import Response
 
 from app.services.pdf_parser import extract_text_from_pdf
+from app.services.prefilter_proposal import prefilter_syllabus_text
 from app.services.ai_agent import run_agent_pipeline
 from app.services.calendar_export import generate_ics
 from app.models.schemas import ParseResponse
@@ -22,6 +23,8 @@ async def parse_syllabus(
 
     # Step 1: Extract text
     syllabus_text = extract_text_from_pdf(file_bytes)
+    syllabus_text = prefilter_syllabus_text(syllabus_text)
+    print(syllabus_text)
     if not syllabus_text.strip():
         raise HTTPException(
             400,
@@ -55,6 +58,7 @@ async def export_ics(
 
     file_bytes = await file.read()
     syllabus_text = extract_text_from_pdf(file_bytes)
+    syllabus_text = prefilter_syllabus_text(syllabus_text)
     if not syllabus_text.strip():
         raise HTTPException(400, "Could not extract text from this PDF.")
 

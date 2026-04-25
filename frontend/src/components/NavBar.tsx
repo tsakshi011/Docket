@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '../useAuth';
 
 interface NavBarProps {
   currentPage: string;
@@ -8,6 +9,7 @@ interface NavBarProps {
 
 export default function NavBar({ currentPage, onNavigate }: NavBarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signInWithGoogle, logout } = useAuth();
 
   const navItems = [
     { label: 'Schedule', page: 'schedule' },
@@ -41,27 +43,61 @@ export default function NavBar({ currentPage, onNavigate }: NavBarProps) {
         The Clerk's Desk
       </button>
 
-      {/* Desktop: Sign In on the right */}
-      <div className="hidden md:block">
-        <button className="px-5 py-2 rounded-full text-sm font-medium bg-[#485C11] text-white hover:bg-[#3a4a0d] transition-colors">
-          Sign In
-        </button>
+      {/* Desktop: Sign In / User on the right */}
+      <div className="hidden md:flex items-center gap-3">
+        {user ? (
+          <>
+            <img
+              src={user.photoURL || ''}
+              alt={user.displayName || 'User'}
+              className="w-8 h-8 rounded-full border-2 border-[#485C11]"
+              referrerPolicy="no-referrer"
+            />
+            <span className="text-sm font-medium text-[#485C11] max-w-[120px] truncate">
+              {user.displayName?.split(' ')[0]}
+            </span>
+            <button
+              onClick={logout}
+              className="p-2 rounded-full text-[#485C11] hover:bg-[#485C11]/10 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={signInWithGoogle}
+            className="px-5 py-2 rounded-full text-sm font-medium bg-[#485C11] text-white hover:bg-[#3a4a0d] transition-colors"
+          >
+            Sign In
+          </button>
+        )}
       </div>
 
-      {/* Mobile: "Area" brand + hamburger */}
+      {/* Mobile: brand + hamburger */}
       <div className="md:hidden flex items-center justify-between w-full">
         <button
           onClick={() => onNavigate('home')}
           className="font-[Inter] text-lg font-bold text-[#485C11]"
         >
-          Area
+          Docket
         </button>
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="text-[#485C11] p-1"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          {user && (
+            <img
+              src={user.photoURL || ''}
+              alt={user.displayName || 'User'}
+              className="w-7 h-7 rounded-full border-2 border-[#485C11]"
+              referrerPolicy="no-referrer"
+            />
+          )}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="text-[#485C11] p-1"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile dropdown menu */}
@@ -80,9 +116,21 @@ export default function NavBar({ currentPage, onNavigate }: NavBarProps) {
                 {item.label}
               </button>
             ))}
-            <button className="px-4 py-2 rounded-lg text-sm font-medium text-[#485C11] hover:bg-[#485C11] hover:text-white transition-colors text-left">
-              Sign In
-            </button>
+            {user ? (
+              <button
+                onClick={() => { logout(); setMobileMenuOpen(false); }}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-[#485C11] hover:bg-[#485C11] hover:text-white transition-colors text-left"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <button
+                onClick={() => { signInWithGoogle(); setMobileMenuOpen(false); }}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-[#485C11] hover:bg-[#485C11] hover:text-white transition-colors text-left"
+              >
+                Sign In with Google
+              </button>
+            )}
           </div>
         </div>
       )}

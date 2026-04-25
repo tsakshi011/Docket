@@ -7,7 +7,7 @@ interface HeroSectionProps {
 
 export default function HeroSection({ onNavigate }: HeroSectionProps) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-6 pb-12 text-center relative overflow-hidden">
+    <div className="flex-1 flex flex-col items-start justify-center px-6 md:px-16 lg:px-24 pb-12 text-left relative overflow-hidden">
       {/* Outer scattered stars */}
       <img src={starImg} alt="" className="absolute top-6 left-[4%] w-16 h-16 md:w-24 md:h-24 opacity-60 pointer-events-none animate-float-delayed object-contain rotate-12" />
       <img src={starImg} alt="" className="absolute top-10 right-[7%] w-20 h-20 md:w-28 md:h-28 opacity-70 pointer-events-none animate-float-slow object-contain -rotate-6" />
@@ -27,10 +27,10 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
 
       {/* Heading */}
       <div className="mb-8 md:mb-12 relative z-10">
-        <p className="text-[#485C11] text-base md:text-lg font-medium font-[Inter] mb-2">
+        <p className="text-[#FFFBF1] text-base md:text-lg font-medium font-[Inter] mb-2">
           What's next on the
         </p>
-        <h1 className="font-[Inter] text-6xl md:text-8xl lg:text-[120px] font-bold text-[#485C11] leading-none tracking-tight">
+        <h1 className="font-[Inter] text-6xl md:text-8xl lg:text-[120px] font-bold text-[#FFFBF1] leading-none tracking-tight">
           Docket?
         </h1>
       </div>

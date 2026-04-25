@@ -13,7 +13,6 @@ export default function NavBar({ currentPage, onNavigate }: NavBarProps) {
 
   const navItems = [
     { label: 'Schedule', page: 'schedule' },
-    { label: 'Tasks', page: 'tasks' },
   ];
 
   return (

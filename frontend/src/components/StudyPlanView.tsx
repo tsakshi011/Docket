@@ -20,6 +20,9 @@ import { generateGcalLink } from '../api';
 interface StudyPlanViewProps {
   data: ParseResponse;
   onExportIcs: () => void;
+  onExportGcal: () => void;
+  gcalExporting: boolean;
+  gcalResult: { calendar_url: string; events_created: number } | null;
   onReset: () => void;
 }
 
@@ -57,7 +60,7 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanViewProps) {
+export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset }: StudyPlanViewProps) {
   const [showStudyBlocks, setShowStudyBlocks] = useState(true);
   const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks'>('timeline');
 
@@ -104,20 +107,45 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
       </div>
 
       {/* Export buttons */}
-      <div className="flex gap-3">
-        <button
-          onClick={onExportIcs}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#485C11] text-white rounded-full hover:bg-[#3a4a0d] transition-colors font-medium"
-        >
-          <Download className="w-4 h-4" />
-          Download .ics File
-        </button>
-        <button
-          onClick={onReset}
-          className="px-4 py-2.5 border border-[#485C11]/40 text-[#485C11] rounded-full hover:bg-[#d4ecd4] transition-colors font-medium"
-        >
-          New Upload
-        </button>
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-3">
+          <button
+            onClick={onExportGcal}
+            disabled={gcalExporting}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#485C11] text-white rounded-full hover:bg-[#3a4a0d] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Calendar className="w-4 h-4" />
+            {gcalExporting ? 'Creating Calendar...' : 'Export to Google Calendar'}
+          </button>
+          <button
+            onClick={onExportIcs}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[#485C11]/40 text-[#485C11] rounded-full hover:bg-[#d4ecd4] transition-colors font-medium"
+          >
+            <Download className="w-4 h-4" />
+            .ics File
+          </button>
+          <button
+            onClick={onReset}
+            className="px-4 py-2.5 border border-[#485C11]/40 text-[#485C11] rounded-full hover:bg-[#d4ecd4] transition-colors font-medium"
+          >
+            New Upload
+          </button>
+        </div>
+        {gcalResult && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-sm text-green-800">
+              Created {gcalResult.events_created} events in your Google Calendar!
+            </span>
+            <a
+              href={gcalResult.calendar_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-green-700 hover:text-green-900 flex items-center gap-1"
+            >
+              Open Calendar <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}

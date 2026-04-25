@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers.parse import router as parse_router
+from app.routers.calendar import router as calendar_router
 
 app = FastAPI(
     title="Syllabus to Calendar API",
@@ -18,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(parse_router)
+app.include_router(calendar_router)
 
 
 @app.get("/api/health")

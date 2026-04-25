@@ -36,7 +36,7 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
       </div>
 
       {/* Typewriter image with nearby stars */}
-      <div className="relative z-10 w-full max-w-xs md:max-w-lg lg:max-w-xl self-center -mt-6 md:-mt-10">
+      <div className="relative z-10 w-full max-w-xs md:max-w-lg lg:max-w-xl self-center -mt-12 md:-mt-20">
         <img
           src={typewriterImg}
           alt="Vintage typewriter"

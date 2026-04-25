@@ -9,16 +9,14 @@ export default function App() {
   const [data, setData] = useState<ParseResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [apiKey, setApiKey] = useState('');
 
-  const handleSubmit = async (f: File, key: string) => {
+  const handleSubmit = async (f: File) => {
     setFile(f);
-    setApiKey(key);
     setStep('processing');
     setError(null);
 
     try {
-      const result = await parseSyllabus(f, key);
+      const result = await parseSyllabus(f);
       setData(result);
       setStep('review');
     } catch (err: unknown) {
@@ -34,9 +32,9 @@ export default function App() {
   };
 
   const handleExportIcs = async () => {
-    if (!file || !apiKey) return;
+    if (!file) return;
     try {
-      const blob = await exportIcs(file, apiKey);
+      const blob = await exportIcs(file);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

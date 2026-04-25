@@ -1,14 +1,13 @@
 import { useState, useCallback } from 'react';
-import { Upload, FileText, Key } from 'lucide-react';
+import { Upload, FileText } from 'lucide-react';
 
 interface FileUploadProps {
-  onSubmit: (file: File, apiKey: string) => void;
+  onSubmit: (file: File) => void;
   isLoading: boolean;
 }
 
 export default function FileUpload({ onSubmit, isLoading }: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('openai_key') || '');
   const [dragOver, setDragOver] = useState(false);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -21,9 +20,8 @@ export default function FileUpload({ onSubmit, isLoading }: FileUploadProps) {
   }, []);
 
   const handleSubmit = () => {
-    if (!file || !apiKey) return;
-    localStorage.setItem('openai_key', apiKey);
-    onSubmit(file, apiKey);
+    if (!file) return;
+    onSubmit(file);
   };
 
   return (
@@ -78,26 +76,10 @@ export default function FileUpload({ onSubmit, isLoading }: FileUploadProps) {
         />
       </div>
 
-      {/* API Key */}
-      <div className="space-y-1">
-        <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
-          <Key className="w-4 h-4" />
-          OpenAI API Key
-        </label>
-        <input
-          type="password"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder="sk-..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-        />
-        <p className="text-xs text-gray-400">Stored locally in your browser. Never sent anywhere except OpenAI.</p>
-      </div>
-
       {/* Submit */}
       <button
         onClick={handleSubmit}
-        disabled={!file || !apiKey || isLoading}
+        disabled={!file || isLoading}
         className="w-full py-3 px-4 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
       >
         {isLoading ? (

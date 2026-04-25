@@ -70,7 +70,7 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center space-y-1">
-        <h1 className="font-[Playfair_Display] text-2xl font-bold text-[#485C11]">{data.course_name}</h1>
+        <h1 className="font-[Inter] text-2xl font-bold text-[#485C11]">{data.course_name}</h1>
         <p className="text-[#485C11]/70">{data.semester}{data.instructor ? ` — ${data.instructor}` : ''}</p>
       </div>
 

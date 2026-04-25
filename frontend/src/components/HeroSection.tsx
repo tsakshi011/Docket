@@ -30,7 +30,7 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
         <p className="text-[#485C11] text-base md:text-lg font-medium font-[Inter] mb-2">
           What's next on the
         </p>
-        <h1 className="font-[Playfair_Display] text-6xl md:text-8xl lg:text-[120px] font-bold text-[#485C11] leading-none tracking-tight">
+        <h1 className="font-[Inter] text-6xl md:text-8xl lg:text-[120px] font-bold text-[#485C11] leading-none tracking-tight">
           Docket?
         </h1>
       </div>

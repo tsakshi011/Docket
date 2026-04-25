@@ -120,7 +120,7 @@ export default function App() {
       {page === 'tasks' && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
-            <h2 className="font-[Playfair_Display] text-3xl font-bold text-[#485C11]">
+            <h2 className="font-[Inter] text-3xl font-bold text-[#485C11]">
               Tasks
             </h2>
             <p className="text-[#485C11]/70 max-w-md">
@@ -140,7 +140,7 @@ export default function App() {
       {page === 'schedule' && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4">
-            <h2 className="font-[Playfair_Display] text-3xl font-bold text-[#485C11]">
+            <h2 className="font-[Inter] text-3xl font-bold text-[#485C11]">
               Schedule
             </h2>
             <p className="text-[#485C11]/70 max-w-md">

@@ -1,9 +1,9 @@
-from fastapi import APIRouter, UploadFile, File, Header, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import Response
 
 from app.services.pdf_parser import extract_text_from_pdf
 from app.services.ai_agent import run_agent_pipeline
-from app.services.calendar_export import generate_ics, generate_gcal_link
+from app.services.calendar_export import generate_ics
 from app.models.schemas import ParseResponse
 
 router = APIRouter(prefix="/api", tags=["parse"])
@@ -12,7 +12,6 @@ router = APIRouter(prefix="/api", tags=["parse"])
 @router.post("/parse", response_model=ParseResponse)
 async def parse_syllabus(
     file: UploadFile = File(...),
-    x_openai_key: str = Header(...),
 ):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "Please upload a PDF file.")
@@ -31,7 +30,7 @@ async def parse_syllabus(
 
     # Step 2+3: Run agentic pipeline (extract events → generate study plan)
     try:
-        plan = run_agent_pipeline(syllabus_text, x_openai_key)
+        plan = run_agent_pipeline(syllabus_text)
     except Exception as e:
         raise HTTPException(500, f"AI processing failed: {str(e)}")
 
@@ -49,7 +48,6 @@ async def parse_syllabus(
 @router.post("/export/ics")
 async def export_ics(
     file: UploadFile = File(...),
-    x_openai_key: str = Header(...),
 ):
     """Parse syllabus and return a downloadable .ics file."""
     if not file.filename or not file.filename.lower().endswith(".pdf"):
@@ -61,7 +59,7 @@ async def export_ics(
         raise HTTPException(400, "Could not extract text from this PDF.")
 
     try:
-        plan = run_agent_pipeline(syllabus_text, x_openai_key)
+        plan = run_agent_pipeline(syllabus_text)
     except Exception as e:
         raise HTTPException(500, f"AI processing failed: {str(e)}")
 

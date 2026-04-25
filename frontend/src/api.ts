@@ -5,34 +5,22 @@ const API_BASE = import.meta.env.PROD
   ? 'https://syllabus-to-calendar-vfegtvvl.fly.dev/api'
   : '/api';
 
-export async function parseSyllabus(
-  file: File,
-  openaiKey: string,
-): Promise<ParseResponse> {
+export async function parseSyllabus(file: File): Promise<ParseResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
   const response = await axios.post<ParseResponse>(`${API_BASE}/parse`, formData, {
-    headers: {
-      'X-OpenAI-Key': openaiKey,
-    },
     timeout: 120000,
   });
 
   return response.data;
 }
 
-export async function exportIcs(
-  file: File,
-  openaiKey: string,
-): Promise<Blob> {
+export async function exportIcs(file: File): Promise<Blob> {
   const formData = new FormData();
   formData.append('file', file);
 
   const response = await axios.post(`${API_BASE}/export/ics`, formData, {
-    headers: {
-      'X-OpenAI-Key': openaiKey,
-    },
     responseType: 'blob',
     timeout: 120000,
   });

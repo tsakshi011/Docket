@@ -21,7 +21,7 @@ Traditional automation: "Read dates from PDF → put them on calendar."
 | Frontend | React + TypeScript + Tailwind CSS + Vite |
 | Backend | Python + FastAPI |
 | PDF Parsing | pdfplumber |
-| AI Agent | OpenAI GPT-4o (structured outputs) |
+| AI Agent | Groq (Llama 3.3 70B) — free, fast inference |
 | Calendar Export | .ics file + Google Calendar links |
 
 ## Quick Start
@@ -31,6 +31,10 @@ Traditional automation: "Read dates from PDF → put them on calendar."
 ```bash
 cd backend
 pip install -e .
+
+# Set your Groq API key (free at https://console.groq.com/keys)
+export GROQ_API_KEY=gsk_your-key-here
+
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -42,7 +46,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173, upload a syllabus PDF, enter your OpenAI API key, and generate your study plan.
+Open http://localhost:5173, upload a syllabus PDF, and generate your study plan. No API key needed in the UI — it's handled server-side.
 
 ## Architecture
 
@@ -54,8 +58,8 @@ User uploads PDF
 │  React Frontend  │────▶│  Python Backend (FastAPI)     │
 │  - File upload   │     │                              │
 │  - Event review  │     │  1. pdfplumber: extract text │
-│  - Study plan UI │     │  2. GPT-4o: extract events   │
-│  - .ics download │     │  3. GPT-4o: generate study   │
+│  - Study plan UI │     │  2. Llama 3.3: extract events│
+│  - .ics download │     │  3. Llama 3.3: generate study│
 │  - GCal links    │◀────│     plan (agentic reasoning) │
 └─────────────────┘     └──────────────────────────────┘
 ```

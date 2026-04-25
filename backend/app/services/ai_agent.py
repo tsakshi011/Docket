@@ -143,6 +143,8 @@ def _sanitize_events(events: list[dict]) -> list[dict]:
             continue
         if not ev.get("title") or not ev.get("date"):
             continue
+        if ev.get("duration_minutes") is None:
+            ev.pop("duration_minutes", None)
         cleaned.append(ev)
     return cleaned
 
@@ -239,6 +241,10 @@ Generate an optimal study plan with preparation blocks for each event. Break dow
     )
 
     raw = json.loads(response.choices[0].message.content)
+
+    for block in raw.get("study_blocks", []):
+        if isinstance(block, dict) and block.get("duration_minutes") is None:
+            block.pop("duration_minutes", None)
 
     raw["syllabus_events"] = []
     return StudyPlan(**raw)

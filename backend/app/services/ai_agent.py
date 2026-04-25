@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 from openai import OpenAI
 
@@ -10,6 +11,11 @@ load_dotenv()
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_MODEL = "llama-3.3-70b-versatile"
+
+# Groq free-tier limit for llama-3.3-70b-versatile is 12,000 TPM.
+# Reserve tokens for system prompt (~600) and response (~3,000).
+MAX_USER_TOKENS = 6_000
+CHARS_PER_TOKEN_ESTIMATE = 4
 
 EXTRACT_SYSTEM_PROMPT = """You are an expert academic syllabus parser. Given the raw text of a course syllabus, extract ALL important dates and deadlines.
 
@@ -83,22 +89,111 @@ def _get_client() -> OpenAI:
     return OpenAI(api_key=api_key, base_url=GROQ_BASE_URL)
 
 
-def extract_events(syllabus_text: str) -> ParsedSyllabus:
-    """Step 1: Extract raw events from syllabus text."""
-    client = _get_client()
+def _estimate_tokens(text: str) -> int:
+    return len(text) // CHARS_PER_TOKEN_ESTIMATE
 
+
+def _chunk_text(text: str, max_tokens: int = MAX_USER_TOKENS) -> list[str]:
+    """Split text into chunks that each fit within the token budget.
+
+    Splits on paragraph boundaries (double-newline) first, then falls back to
+    single newlines so that context within a paragraph is kept together.
+    """
+    max_chars = max_tokens * CHARS_PER_TOKEN_ESTIMATE
+
+    if len(text) <= max_chars:
+        return [text]
+
+    chunks: list[str] = []
+    current_chunk: list[str] = []
+    current_len = 0
+
+    paragraphs = text.split("\n\n")
+    for para in paragraphs:
+        para_with_sep = para + "\n\n"
+        if current_len + len(para_with_sep) > max_chars and current_chunk:
+            chunks.append("".join(current_chunk).rstrip())
+            current_chunk = []
+            current_len = 0
+
+        if len(para_with_sep) > max_chars:
+            # paragraph itself is too large – split on single newlines
+            for line in para.split("\n"):
+                line_with_sep = line + "\n"
+                if current_len + len(line_with_sep) > max_chars and current_chunk:
+                    chunks.append("".join(current_chunk).rstrip())
+                    current_chunk = []
+                    current_len = 0
+                current_chunk.append(line_with_sep)
+                current_len += len(line_with_sep)
+        else:
+            current_chunk.append(para_with_sep)
+            current_len += len(para_with_sep)
+
+    if current_chunk:
+        chunks.append("".join(current_chunk).rstrip())
+
+    return chunks
+
+
+def _extract_events_single(client: OpenAI, text: str) -> dict:
+    """Send a single chunk to Groq and return the raw parsed dict."""
     response = client.chat.completions.create(
         model=GROQ_MODEL,
         messages=[
             {"role": "system", "content": EXTRACT_SYSTEM_PROMPT},
-            {"role": "user", "content": syllabus_text},
+            {"role": "user", "content": text},
         ],
         response_format={"type": "json_object"},
         temperature=0.1,
     )
+    return json.loads(response.choices[0].message.content)
 
-    raw = json.loads(response.choices[0].message.content)
-    return ParsedSyllabus(**raw)
+
+def extract_events(syllabus_text: str) -> ParsedSyllabus:
+    """Step 1: Extract raw events from syllabus text.
+
+    If the text exceeds the Groq token limit it is split into chunks,
+    each chunk is processed separately, and the events are merged.
+    """
+    client = _get_client()
+    chunks = _chunk_text(syllabus_text)
+
+    if len(chunks) == 1:
+        raw = _extract_events_single(client, chunks[0])
+        return ParsedSyllabus(**raw)
+
+    all_events: list[dict] = []
+    course_name = ""
+    semester = ""
+    instructor = None
+
+    for i, chunk in enumerate(chunks):
+        if i > 0:
+            # Wait to stay under the per-minute token rate limit.
+            time.sleep(15)
+        raw = _extract_events_single(client, chunk)
+        if not course_name:
+            course_name = raw.get("course_name", "")
+            semester = raw.get("semester", "")
+            instructor = raw.get("instructor")
+        all_events.extend(raw.get("events", []))
+
+    # De-duplicate events that may appear in overlapping chunk boundaries.
+    seen: set[tuple[str, str]] = set()
+    unique_events: list[dict] = []
+    for ev in all_events:
+        key = (ev.get("title", ""), ev.get("date", ""))
+        if key not in seen:
+            seen.add(key)
+            unique_events.append(ev)
+
+    return ParsedSyllabus(
+        course_name=course_name,
+        semester=semester,
+        instructor=instructor,
+        events=unique_events,
+    )
 
 
 def generate_study_plan(parsed: ParsedSyllabus) -> StudyPlan:
@@ -139,6 +234,9 @@ def run_agent_pipeline(syllabus_text: str) -> StudyPlan:
     """Full agentic pipeline: Extract → Reason → Plan."""
     # Step 1: Extract events from syllabus
     parsed = extract_events(syllabus_text)
+
+    # Pause between pipeline steps to respect Groq's TPM rate limit.
+    time.sleep(15)
 
     # Step 2: Generate autonomous study plan
     plan = generate_study_plan(parsed)

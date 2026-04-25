@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 * {
-  cursor: url('/src/assets/cursor-star-32.png') 16 16, auto;
+  cursor: url('/cursor-star.png') 25 32, auto;
 }
 
 a, button, [role="button"], input[type="submit"], select {
-  cursor: url('/src/assets/cursor-star-32.png') 16 16, pointer;
+  cursor: url('/cursor-star.png') 25 32, pointer;
 }
 
 @keyframes float-slow {

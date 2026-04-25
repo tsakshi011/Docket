@@ -3,7 +3,7 @@ import logging
 import os
 import time
 
-from openai import OpenAI
+from openai import APIStatusError, OpenAI, RateLimitError
 
 from app.models.schemas import ParsedSyllabus, StudyPlan
 from dotenv import load_dotenv
@@ -18,6 +18,8 @@ GROQ_FALLBACK_MODEL = "llama-3.1-8b-instant"
 
 # Reserve tokens for system prompt (~600) and response (~3,000).
 MAX_USER_TOKENS = 6_000
+# The 8B fallback model has a 6 000 TPM cap; keep user text well under that.
+FALLBACK_MAX_USER_TOKENS = 1_500
 CHARS_PER_TOKEN_ESTIMATE = 4
 
 EXTRACT_SYSTEM_PROMPT = """You are an expert academic syllabus parser. Given the raw text of a course syllabus, extract ALL important dates and deadlines.
@@ -92,23 +94,13 @@ def _get_client() -> OpenAI:
     return OpenAI(api_key=api_key, base_url=GROQ_BASE_URL)
 
 
-def _chat_completion(client: OpenAI, **kwargs) -> str:
-    """Call Groq chat completion, falling back to a smaller model on 429."""
-    from openai import RateLimitError
-
-    kwargs.setdefault("model", GROQ_MODEL)
-    try:
-        response = client.chat.completions.create(**kwargs)
-        return response.choices[0].message.content
-    except RateLimitError:
-        logger.warning(
-            "Rate-limited on %s, retrying with fallback model %s",
-            kwargs["model"],
-            GROQ_FALLBACK_MODEL,
-        )
-        kwargs["model"] = GROQ_FALLBACK_MODEL
-        response = client.chat.completions.create(**kwargs)
-        return response.choices[0].message.content
+def _is_rate_or_size_error(exc: Exception) -> bool:
+    """Return True for 429 rate-limit or 413 request-too-large errors."""
+    if isinstance(exc, RateLimitError):
+        return True
+    if isinstance(exc, APIStatusError) and exc.status_code == 413:
+        return True
+    return False
 
 
 def _estimate_tokens(text: str) -> int:
@@ -172,10 +164,12 @@ def _sanitize_events(events: list[dict]) -> list[dict]:
     return cleaned
 
 
-def _extract_events_single(client: OpenAI, text: str) -> dict:
+def _extract_events_single(
+    client: OpenAI, text: str, model: str = GROQ_MODEL,
+) -> dict:
     """Send a single chunk to Groq and return the raw parsed dict."""
-    content = _chat_completion(
-        client,
+    response = client.chat.completions.create(
+        model=model,
         messages=[
             {"role": "system", "content": EXTRACT_SYSTEM_PROMPT},
             {"role": "user", "content": text},
@@ -183,20 +177,20 @@ def _extract_events_single(client: OpenAI, text: str) -> dict:
         response_format={"type": "json_object"},
         temperature=0.1,
     )
-    return json.loads(content)
+    return json.loads(response.choices[0].message.content)
 
 
-def extract_events(syllabus_text: str) -> ParsedSyllabus:
-    """Step 1: Extract raw events from syllabus text.
-
-    If the text exceeds the Groq token limit it is split into chunks,
-    each chunk is processed separately, and the events are merged.
-    """
-    client = _get_client()
-    chunks = _chunk_text(syllabus_text)
+def _extract_events_with_model(
+    client: OpenAI,
+    syllabus_text: str,
+    model: str,
+    max_user_tokens: int,
+) -> ParsedSyllabus:
+    """Run extraction with a specific model and token budget."""
+    chunks = _chunk_text(syllabus_text, max_tokens=max_user_tokens)
 
     if len(chunks) == 1:
-        raw = _extract_events_single(client, chunks[0])
+        raw = _extract_events_single(client, chunks[0], model=model)
         raw["events"] = _sanitize_events(raw.get("events", []))
         return ParsedSyllabus(**raw)
 
@@ -207,16 +201,14 @@ def extract_events(syllabus_text: str) -> ParsedSyllabus:
 
     for i, chunk in enumerate(chunks):
         if i > 0:
-            # Wait to stay under the per-minute token rate limit.
             time.sleep(15)
-        raw = _extract_events_single(client, chunk)
+        raw = _extract_events_single(client, chunk, model=model)
         if not course_name:
             course_name = raw.get("course_name", "")
             semester = raw.get("semester", "")
             instructor = raw.get("instructor")
         all_events.extend(_sanitize_events(raw.get("events", [])))
 
-    # De-duplicate events that may appear in overlapping chunk boundaries.
     seen: set[tuple[str, str]] = set()
     unique_events: list[dict] = []
     for ev in all_events:
@@ -231,6 +223,29 @@ def extract_events(syllabus_text: str) -> ParsedSyllabus:
         instructor=instructor,
         events=unique_events,
     )
+
+
+def extract_events(syllabus_text: str) -> ParsedSyllabus:
+    """Step 1: Extract raw events from syllabus text.
+
+    Tries the primary model first.  On rate-limit / request-too-large errors
+    it retries with the smaller fallback model and tighter chunk sizes.
+    """
+    client = _get_client()
+    try:
+        return _extract_events_with_model(
+            client, syllabus_text, GROQ_MODEL, MAX_USER_TOKENS,
+        )
+    except (RateLimitError, APIStatusError) as exc:
+        if not _is_rate_or_size_error(exc):
+            raise
+        logger.warning(
+            "Primary model unavailable (%s), falling back to %s",
+            exc, GROQ_FALLBACK_MODEL,
+        )
+        return _extract_events_with_model(
+            client, syllabus_text, GROQ_FALLBACK_MODEL, FALLBACK_MAX_USER_TOKENS,
+        )
 
 
 def generate_study_plan(parsed: ParsedSyllabus) -> StudyPlan:
@@ -253,17 +268,33 @@ Syllabus events:
 
 Generate an optimal study plan with preparation blocks for each event. Break down large assignments into sub-tasks. Schedule study sessions before exams. Balance the workload across weeks."""
 
-    content = _chat_completion(
-        client,
-        messages=[
-            {"role": "system", "content": STUDY_PLAN_SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.1,
-    )
+    messages = [
+        {"role": "system", "content": STUDY_PLAN_SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt},
+    ]
 
-    raw = json.loads(content)
+    try:
+        response = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=messages,
+            response_format={"type": "json_object"},
+            temperature=0.1,
+        )
+    except (RateLimitError, APIStatusError) as exc:
+        if not _is_rate_or_size_error(exc):
+            raise
+        logger.warning(
+            "Primary model unavailable (%s), falling back to %s",
+            exc, GROQ_FALLBACK_MODEL,
+        )
+        response = client.chat.completions.create(
+            model=GROQ_FALLBACK_MODEL,
+            messages=messages,
+            response_format={"type": "json_object"},
+            temperature=0.1,
+        )
+
+    raw = json.loads(response.choices[0].message.content)
 
     for block in raw.get("study_blocks", []):
         if isinstance(block, dict) and block.get("duration_minutes") is None:

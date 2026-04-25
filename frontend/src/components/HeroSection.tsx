@@ -26,7 +26,7 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
       <img src={starImg} alt="" className="absolute bottom-[55%] left-[30%] w-6 h-6 md:w-8 md:h-8 opacity-35 pointer-events-none animate-float-slow object-contain rotate-[70deg]" />
 
       {/* Heading */}
-      <div className="mb-8 md:mb-12 relative z-10">
+      <div className="mb-2 md:mb-4 relative z-10 mt-auto">
         <p className="text-[#FFFBF1] text-base md:text-lg font-medium font-[Inter] mb-2">
           What's next on the
         </p>
@@ -36,7 +36,7 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
       </div>
 
       {/* Typewriter image with nearby stars */}
-      <div className="relative z-10 w-full max-w-md md:max-w-lg lg:max-w-xl">
+      <div className="relative z-10 w-full max-w-md md:max-w-lg lg:max-w-xl self-center">
         <img
           src={typewriterImg}
           alt="Vintage typewriter"
@@ -54,7 +54,7 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
       </div>
 
       {/* CTA button */}
-      <div className="mt-8 relative z-10">
+      <div className="mt-4 mb-auto relative z-10 self-center">
         <button
           onClick={() => onNavigate('upload')}
           className="px-8 py-3 bg-[#485C11] text-white rounded-full font-medium text-base hover:bg-[#3a4a0d] transition-colors shadow-lg"

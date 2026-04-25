@@ -136,6 +136,18 @@ def _chunk_text(text: str, max_tokens: int = MAX_USER_TOKENS) -> list[str]:
     return chunks
 
 
+def _sanitize_events(events: list[dict]) -> list[dict]:
+    """Drop events that are missing required fields the LLM sometimes omits."""
+    cleaned: list[dict] = []
+    for ev in events:
+        if not isinstance(ev, dict):
+            continue
+        if not ev.get("title") or not ev.get("date"):
+            continue
+        cleaned.append(ev)
+    return cleaned
+
+
 def _extract_events_single(client: OpenAI, text: str) -> dict:
     """Send a single chunk to Groq and return the raw parsed dict."""
     response = client.chat.completions.create(
@@ -161,6 +173,7 @@ def extract_events(syllabus_text: str) -> ParsedSyllabus:
 
     if len(chunks) == 1:
         raw = _extract_events_single(client, chunks[0])
+        raw["events"] = _sanitize_events(raw.get("events", []))
         return ParsedSyllabus(**raw)
 
     all_events: list[dict] = []
@@ -177,7 +190,7 @@ def extract_events(syllabus_text: str) -> ParsedSyllabus:
             course_name = raw.get("course_name", "")
             semester = raw.get("semester", "")
             instructor = raw.get("instructor")
-        all_events.extend(raw.get("events", []))
+        all_events.extend(_sanitize_events(raw.get("events", [])))
 
     # De-duplicate events that may appear in overlapping chunk boundaries.
     seen: set[tuple[str, str]] = set()

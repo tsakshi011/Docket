@@ -4,6 +4,9 @@ import os
 from openai import OpenAI
 
 from app.models.schemas import ParsedSyllabus, StudyPlan
+from dotenv import load_dotenv
+
+load_dotenv()
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_MODEL = "llama-3.3-70b-versatile"
@@ -76,7 +79,7 @@ You MUST respond with valid JSON matching this exact schema:
 
 
 def _get_client() -> OpenAI:
-    api_key = os.environ.get("GROQ_API_KEY", "")
+    api_key = os.environ["GROQ_API_KEY"]
     return OpenAI(api_key=api_key, base_url=GROQ_BASE_URL)
 
 

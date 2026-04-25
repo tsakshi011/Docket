@@ -32,9 +32,6 @@ Traditional automation: "Read dates from PDF → put them on calendar."
 cd backend
 pip install -e .
 
-# Set your Groq API key (free at https://console.groq.com/keys)
-export GROQ_API_KEY=gsk_your-key-here
-
 uvicorn app.main:app --reload --port 8000
 ```
 

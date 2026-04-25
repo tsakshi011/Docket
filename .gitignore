@@ -19,3 +19,6 @@ frontend/dist/
 # JSON
 package-lock.json
 package.json
+
+# Test
+test/

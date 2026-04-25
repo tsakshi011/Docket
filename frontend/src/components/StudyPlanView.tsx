@@ -14,7 +14,7 @@ import {
   PenLine,
   CheckCircle2,
 } from 'lucide-react';
-import type { ParseResponse, SyllabusEvent, StudyBlock } from '../types';
+import type { ParseResponse, StudyBlock } from '../types';
 import { generateGcalLink } from '../api';
 
 interface StudyPlanViewProps {
@@ -142,7 +142,6 @@ export default function StudyPlanView({ data, onExportIcs, onReset }: StudyPlanV
         <div className="space-y-2">
           {allItems.map((item, i) => {
             const isEvent = item.kind === 'event';
-            const ev = item as SyllabusEvent & { kind: string };
             const block = item as StudyBlock & { kind: string };
             return (
               <div

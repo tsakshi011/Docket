@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 
@@ -9,8 +10,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_FALLBACK_MODEL = "llama-3.1-8b-instant"
 
 # Reserve tokens for system prompt (~600) and response (~3,000).
 MAX_USER_TOKENS = 6_000
@@ -88,6 +92,25 @@ def _get_client() -> OpenAI:
     return OpenAI(api_key=api_key, base_url=GROQ_BASE_URL)
 
 
+def _chat_completion(client: OpenAI, **kwargs) -> str:
+    """Call Groq chat completion, falling back to a smaller model on 429."""
+    from openai import RateLimitError
+
+    kwargs.setdefault("model", GROQ_MODEL)
+    try:
+        response = client.chat.completions.create(**kwargs)
+        return response.choices[0].message.content
+    except RateLimitError:
+        logger.warning(
+            "Rate-limited on %s, retrying with fallback model %s",
+            kwargs["model"],
+            GROQ_FALLBACK_MODEL,
+        )
+        kwargs["model"] = GROQ_FALLBACK_MODEL
+        response = client.chat.completions.create(**kwargs)
+        return response.choices[0].message.content
+
+
 def _estimate_tokens(text: str) -> int:
     return len(text) // CHARS_PER_TOKEN_ESTIMATE
 
@@ -151,8 +174,8 @@ def _sanitize_events(events: list[dict]) -> list[dict]:
 
 def _extract_events_single(client: OpenAI, text: str) -> dict:
     """Send a single chunk to Groq and return the raw parsed dict."""
-    response = client.chat.completions.create(
-        model=GROQ_MODEL,
+    content = _chat_completion(
+        client,
         messages=[
             {"role": "system", "content": EXTRACT_SYSTEM_PROMPT},
             {"role": "user", "content": text},
@@ -160,7 +183,7 @@ def _extract_events_single(client: OpenAI, text: str) -> dict:
         response_format={"type": "json_object"},
         temperature=0.1,
     )
-    return json.loads(response.choices[0].message.content)
+    return json.loads(content)
 
 
 def extract_events(syllabus_text: str) -> ParsedSyllabus:
@@ -230,8 +253,8 @@ Syllabus events:
 
 Generate an optimal study plan with preparation blocks for each event. Break down large assignments into sub-tasks. Schedule study sessions before exams. Balance the workload across weeks."""
 
-    response = client.chat.completions.create(
-        model=GROQ_MODEL,
+    content = _chat_completion(
+        client,
         messages=[
             {"role": "system", "content": STUDY_PLAN_SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
@@ -240,7 +263,7 @@ Generate an optimal study plan with preparation blocks for each event. Break dow
         temperature=0.1,
     )
 
-    raw = json.loads(response.choices[0].message.content)
+    raw = json.loads(content)
 
     for block in raw.get("study_blocks", []):
         if isinstance(block, dict) and block.get("duration_minutes") is None:

@@ -227,6 +227,11 @@ Generate an optimal study plan with preparation blocks for each event. Break dow
     )
 
     raw = json.loads(response.choices[0].message.content)
+    # The LLM often returns syllabus_events as plain strings instead of full
+    # event objects.  run_agent_pipeline overwrites this field with the
+    # properly parsed events, so replace it with an empty list to avoid
+    # Pydantic validation errors.
+    raw["syllabus_events"] = []
     return StudyPlan(**raw)
 
 

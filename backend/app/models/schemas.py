@@ -34,9 +34,9 @@ class StudyPlan(BaseModel):
     course_name: str
     semester: str
     syllabus_events: list[SyllabusEvent]
-    study_blocks: list[StudyBlock]
-    weekly_summary: list[str]  # high-level per-week summary
-    warnings: list[str]  # e.g., "Heavy week: 3 deadlines on Nov 10-14"
+    study_blocks: list[StudyBlock] = []
+    weekly_summary: list[str] = [] # high-level per-week summary
+    warnings: list[str] = [] # e.g., "Heavy week: 3 deadlines on Nov 10-14"
 
 
 class ParseRequest(BaseModel):

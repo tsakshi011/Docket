@@ -295,6 +295,9 @@ Generate an optimal study plan with preparation blocks for each event. Break dow
         )
 
     raw = json.loads(response.choices[0].message.content)
+    raw.setdefault("weekly_summary", [])
+    raw.setdefault("warnings", [])
+    raw.setdefault("syllabus_events", [])
 
     for block in raw.get("study_blocks", []):
         if isinstance(block, dict) and block.get("duration_minutes") is None:

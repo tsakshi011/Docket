@@ -18,17 +18,15 @@ export default function NavBar({ currentPage, onNavigate }: NavBarProps) {
 
   return (
     <nav className="w-full px-6 py-4 flex items-center justify-between relative z-10">
-      {/* Desktop: nav links on the left (glassmorphism container) */}
-      <div className="hidden md:flex items-center gap-0 backdrop-blur-[15px] bg-white/10 rounded-full p-1">
-        {navItems.map((item) => (
+      {/* Desktop: Schedule | Tasks unified bar on the left */}
+      <div className="hidden md:flex items-center rounded-full overflow-hidden bg-[#485C11]">
+        {navItems.map((item, i) => (
           <button
             key={item.page}
             onClick={() => onNavigate(item.page)}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
-              currentPage === item.page
-                ? 'bg-[#485C11] text-white'
-                : 'bg-[#485C11] text-white hover:bg-[#3a4a0d]'
-            }`}
+            className={`px-6 py-2 text-sm font-medium text-[#FFFBF1] transition-colors hover:bg-[#3a4a0d] ${
+              currentPage === item.page ? 'bg-[#3a4a0d]' : ''
+            } ${i > 0 ? 'border-l border-[#FFFBF1]/30' : ''}`}
           >
             {item.label}
           </button>

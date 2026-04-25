@@ -34,25 +34,15 @@ export interface ParseResponse {
 
 export type AppStep = 'upload' | 'processing' | 'review' | 'success';
 
-<<<<<<< HEAD
-export interface PlanStoreRequest {
-  course_name: string;
-=======
 export interface CalendarExportRequest {
   course_name: string;
   access_token: string;
->>>>>>> 5e078a0fb8605bca5ad6a1298f51f11e70d11d99
   syllabus_events: SyllabusEvent[];
   study_blocks: StudyBlock[];
 }
 
-<<<<<<< HEAD
-export interface PlanStoreResponse {
-  plan_id: string;
-=======
 export interface CalendarExportResponse {
   calendar_id: string;
   calendar_url: string;
   events_created: number;
->>>>>>> 5e078a0fb8605bca5ad6a1298f51f11e70d11d99
 }

@@ -25,11 +25,7 @@ interface StudyPlanViewProps {
   onExportIcs: () => void;
   onExportGcal: () => void;
   gcalExporting: boolean;
-<<<<<<< HEAD
-  gcalUrl: string | null;
-=======
   gcalResult: { calendar_url: string; events_created: number } | null;
->>>>>>> 5e078a0fb8605bca5ad6a1298f51f11e70d11d99
   onReset: () => void;
 }
 
@@ -67,9 +63,6 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-<<<<<<< HEAD
-export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalUrl, onReset }: StudyPlanViewProps) {
-=======
 interface TaskItem {
   id: string;
   text: string;
@@ -77,7 +70,6 @@ interface TaskItem {
 }
 
 export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset }: StudyPlanViewProps) {
->>>>>>> 5e078a0fb8605bca5ad6a1298f51f11e70d11d99
   const [showStudyBlocks, setShowStudyBlocks] = useState(true);
   const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks' | 'tasks'>('timeline');
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -167,15 +159,6 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
             New Upload
           </button>
         </div>
-<<<<<<< HEAD
-        {gcalUrl && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between">
-            <span className="text-sm text-green-800">
-              Calendar feed ready! Google Calendar should be opening.
-            </span>
-            <a
-              href={gcalUrl}
-=======
         {gcalResult && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center justify-between">
             <span className="text-sm text-green-800">
@@ -183,16 +166,11 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
             </span>
             <a
               href={gcalResult.calendar_url}
->>>>>>> 5e078a0fb8605bca5ad6a1298f51f11e70d11d99
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-medium text-green-700 hover:text-green-900 flex items-center gap-1"
             >
-<<<<<<< HEAD
-              Open Google Calendar <ExternalLink className="w-3 h-3" />
-=======
               Open Calendar <ExternalLink className="w-3 h-3" />
->>>>>>> 5e078a0fb8605bca5ad6a1298f51f11e70d11d99
             </a>
           </div>
         )}

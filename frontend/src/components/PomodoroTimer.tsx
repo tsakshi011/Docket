@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 const WORK_MINUTES = 35;
 const BREAK_MINUTES = 5;
@@ -41,6 +42,12 @@ export default function PomodoroTimer() {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           playChime();
+          confetti({
+            particleCount: 150,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ['#485C11', '#FFFBF1', '#F5EDD6', '#C1E1C1', '#FFD700'],
+          });
           const nextPhase: Phase = phase === 'work' ? 'break' : 'work';
           setPhase(nextPhase);
           return (nextPhase === 'work' ? WORK_MINUTES : BREAK_MINUTES) * 60;

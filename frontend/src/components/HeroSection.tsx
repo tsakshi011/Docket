@@ -1,5 +1,6 @@
 import typewriterImg from '../assets/typewriter.png';
 import starImg from '../assets/star.png';
+import logoD from '../assets/docket-logo-d.png';
 
 interface HeroSectionProps {
   onNavigate: (page: string) => void;
@@ -30,8 +31,9 @@ export default function HeroSection({ onNavigate }: HeroSectionProps) {
         <p className="text-[#FFFBF1] text-xl md:text-2xl lg:text-3xl font-medium font-[Inter] mb-2">
           What's next on the
         </p>
-        <h1 className="font-[Inter] text-8xl md:text-[11rem] lg:text-[14rem] font-bold text-[#FFFBF1] leading-none tracking-tight">
-          Docket?
+        <h1 className="font-[Inter] text-8xl md:text-[11rem] lg:text-[14rem] font-bold text-[#FFFBF1] leading-none tracking-tight flex items-end">
+          <img src={logoD} alt="D" className="inline-block h-[2em] w-auto -mr-[0.68em] -mt-[0.3em] -mb-[0.45em] -ml-[0.75em] object-contain" />
+          <span>ocket?</span>
         </h1>
       </div>
 

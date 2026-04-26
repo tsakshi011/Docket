@@ -19,7 +19,12 @@ class UserSignIn(BaseModel):
 async def record_signin(data: UserSignIn):
     db = get_db()
     if db is None:
-        raise HTTPException(status_code=503, detail="Database not configured")
+        return {
+            "uid": data.uid,
+            "email": data.email,
+            "display_name": data.display_name,
+            "last_sign_in": datetime.now(timezone.utc).isoformat(),
+        }
 
     now = datetime.now(timezone.utc)
     result = await db.users.find_one_and_update(
@@ -51,7 +56,7 @@ async def record_signin(data: UserSignIn):
 async def get_user(uid: str):
     db = get_db()
     if db is None:
-        raise HTTPException(status_code=503, detail="Database not configured")
+        raise HTTPException(status_code=404, detail="User not found")
 
     user = await db.users.find_one({"uid": uid}, {"_id": 0})
     if not user:

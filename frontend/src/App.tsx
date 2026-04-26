@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Component } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 import NavBar from './components/NavBar';
 import HeroSection from './components/HeroSection';
 import FileUpload from './components/FileUpload';
@@ -7,6 +8,31 @@ import ScheduleView from './components/ScheduleView';
 import { parseSyllabus, exportIcs, exportToGoogleCalendar } from './api';
 import { useAuth } from './useAuth';
 import type { ParseResponse, AppStep, CalendarExportResponse } from './types';
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('StudyPlanView crashed:', error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-2">Something went wrong</h2>
+          <p className="text-gray-600 mb-4">{this.state.error?.message}</p>
+          <button onClick={() => this.setState({ hasError: false, error: null })} className="px-4 py-2 bg-[#485C11] text-white rounded-lg">Try Again</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 type Page = 'home' | 'upload' | 'schedule';
 
@@ -232,6 +258,7 @@ export default function App() {
             )}
 
             {step === 'review' && data && (
+              <ErrorBoundary>
               <StudyPlanView
                 data={data}
                 onExportIcs={handleExportIcs}
@@ -243,6 +270,7 @@ export default function App() {
                 onSwitchCourse={switchCourse}
                 onDeleteCourse={deleteCourse}
               />
+              </ErrorBoundary>
             )}
           </div>
         </div>

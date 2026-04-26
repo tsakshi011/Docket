@@ -62,3 +62,41 @@ export async function exportToGoogleCalendar(
   );
   return response.data;
 }
+
+// --- User data persistence (MongoDB) ---
+
+export interface UserDataResponse {
+  courses: { name: string; data: ParseResponse }[];
+  task_progress: Record<string, { completed_items: string[]; custom_tasks: { id: string; text: string; completed: boolean }[] }>;
+}
+
+export async function fetchUserCourses(uid: string): Promise<UserDataResponse> {
+  const response = await axios.get<UserDataResponse>(`${API_BASE}/user-data/${uid}/courses`);
+  return response.data;
+}
+
+export async function saveUserCourse(uid: string, courseName: string, courseData: ParseResponse): Promise<void> {
+  await axios.put(`${API_BASE}/user-data/courses`, {
+    uid,
+    course_name: courseName,
+    course_data: courseData,
+  });
+}
+
+export async function deleteUserCourse(uid: string, courseName: string): Promise<void> {
+  await axios.delete(`${API_BASE}/user-data/${uid}/courses/${encodeURIComponent(courseName)}`);
+}
+
+export async function saveUserTaskProgress(
+  uid: string,
+  courseName: string,
+  completedItems: string[],
+  customTasks: { id: string; text: string; completed: boolean }[],
+): Promise<void> {
+  await axios.put(`${API_BASE}/user-data/tasks`, {
+    uid,
+    course_name: courseName,
+    completed_items: completedItems,
+    custom_tasks: customTasks,
+  });
+}

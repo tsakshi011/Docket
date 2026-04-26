@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Calendar,
   BookOpen,
@@ -20,6 +20,11 @@ import {
 import type { ParseResponse, StudyBlock } from '../types';
 import { generateGcalLink } from '../api';
 
+interface TaskProgressData {
+  completed_items: string[];
+  custom_tasks: { id: string; text: string; completed: boolean }[];
+}
+
 interface StudyPlanViewProps {
   data: ParseResponse;
   onExportIcs: () => void;
@@ -30,6 +35,8 @@ interface StudyPlanViewProps {
   savedCourses?: string[];
   onSwitchCourse?: (name: string) => void;
   onDeleteCourse?: (name: string) => void;
+  initialTaskProgress?: TaskProgressData;
+  onTaskProgressChange?: (courseName: string, completedItems: string[], customTasks: TaskItem[]) => void;
 }
 
 const EVENT_TYPE_STYLES: Record<string, { bg: string; text: string; icon: typeof BookOpen }> = {
@@ -72,27 +79,47 @@ interface TaskItem {
   completed: boolean;
 }
 
-export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset, savedCourses, onSwitchCourse, onDeleteCourse }: StudyPlanViewProps) {
+export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset, savedCourses, onSwitchCourse, onDeleteCourse, initialTaskProgress, onTaskProgressChange }: StudyPlanViewProps) {
   const [showStudyBlocks, setShowStudyBlocks] = useState(true);
   const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks' | 'tasks'>('timeline');
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [tasks, setTasks] = useState<TaskItem[]>(initialTaskProgress?.custom_tasks ?? []);
   const [newTask, setNewTask] = useState('');
-  const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
+  const [completedItems, setCompletedItems] = useState<Set<string>>(new Set(initialTaskProgress?.completed_items ?? []));
+  const initialized = useRef(false);
+
+  // Re-initialize when initialTaskProgress changes (e.g. switching courses)
+  useEffect(() => {
+    if (initialized.current) {
+      setTasks(initialTaskProgress?.custom_tasks ?? []);
+      setCompletedItems(new Set(initialTaskProgress?.completed_items ?? []));
+    }
+    initialized.current = true;
+  }, [data.course_name]); // eslint-disable-line react-hooks/exhaustive-deps
   const [showCourseDropdown, setShowCourseDropdown] = useState(false);
+
+  const notifyProgress = (newCompleted: Set<string>, newTasks: TaskItem[]) => {
+    onTaskProgressChange?.(data.course_name, Array.from(newCompleted), newTasks);
+  };
 
   const addTask = () => {
     const text = newTask.trim();
     if (!text) return;
-    setTasks([...tasks, { id: crypto.randomUUID(), text, completed: false }]);
+    const updated = [...tasks, { id: crypto.randomUUID(), text, completed: false }];
+    setTasks(updated);
     setNewTask('');
+    notifyProgress(completedItems, updated);
   };
 
   const toggleTask = (id: string) => {
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+    const updated = tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
+    setTasks(updated);
+    notifyProgress(completedItems, updated);
   };
 
   const deleteTask = (id: string) => {
-    setTasks(tasks.filter((t) => t.id !== id));
+    const updated = tasks.filter((t) => t.id !== id);
+    setTasks(updated);
+    notifyProgress(completedItems, updated);
   };
 
   const allItems = [
@@ -112,6 +139,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
+      notifyProgress(next, tasks);
       return next;
     });
   };

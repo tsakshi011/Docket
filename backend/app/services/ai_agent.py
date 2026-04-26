@@ -399,7 +399,9 @@ Generate a comprehensive course outline organized by topic. If this is a law cou
 
 
 def run_agent_pipeline(syllabus_text: str) -> StudyPlan:
-    """Full agentic pipeline: Extract → Reason → Plan → Outline."""
+    """Full agentic pipeline: Extract → Reason → Plan → Recommend Resources."""
+    from app.services.resource_agent import recommend_resources
+
     # Step 1: Extract events from syllabus
     parsed = extract_events(syllabus_text)
 
@@ -412,14 +414,16 @@ def run_agent_pipeline(syllabus_text: str) -> StudyPlan:
     # Ensure the original syllabus events are included
     plan.syllabus_events = parsed.events
 
-    # Pause before outline generation
-    time.sleep(15)
-
-    # Step 3: Generate course outline
+    # Step 3: Agentic resource routing
+    time.sleep(5)
     try:
-        plan.course_outline = generate_course_outline(parsed, syllabus_text)
-    except Exception as e:
-        logger.warning("Outline generation failed: %s", e)
-        plan.course_outline = []
+        plan.resources = recommend_resources(parsed, plan)
+        logger.info(
+            "Resource agent found %d topic(s) with resources",
+            len(plan.resources.topic_resources),
+        )
+    except Exception as exc:
+        logger.warning("Resource agent failed (non-fatal): %s", exc)
+        # Don't break the pipeline — resources are optional
 
     return plan

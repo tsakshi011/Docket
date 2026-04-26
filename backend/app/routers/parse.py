@@ -46,6 +46,7 @@ async def parse_syllabus(
         warnings=plan.warnings,
         course_outline=plan.course_outline,
         raw_text_preview=syllabus_text[:500],
+        resources=plan.resources,
     )
 
 

@@ -21,6 +21,29 @@ export interface StudyBlock {
   selected?: boolean;
 }
 
+export interface StudyResource {
+  title: string;
+  url: string | null;
+  resource_type: string; // video, textbook, practice, article, tool, course
+  platform: string;
+  relevance: string;
+  priority: string;
+}
+
+export interface TopicResources {
+  topic: string;
+  related_events: string[];
+  resources: StudyResource[];
+}
+
+export interface ResourceRecommendations {
+  course_name: string;
+  subject_domain: string;
+  general_resources: StudyResource[];
+  topic_resources: TopicResources[];
+  study_tips: string[];
+}
+
 export interface OutlineSubtopic {
   name: string;
   rules: string[];
@@ -44,6 +67,7 @@ export interface ParseResponse {
   warnings: string[];
   course_outline: OutlineSection[];
   raw_text_preview: string;
+  resources?: ResourceRecommendations | null;
 }
 
 export type AppStep = 'upload' | 'processing' | 'review' | 'success';

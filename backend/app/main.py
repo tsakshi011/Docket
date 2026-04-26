@@ -11,6 +11,7 @@ from app.routers.parse import router as parse_router
 from app.routers.users import router as users_router
 from app.routers.calendar import router as calendar_router
 from app.routers.user_data import router as user_data_router
+from app.routers.resources import router as resources_router
 
 
 @asynccontextmanager
@@ -39,6 +40,7 @@ app.include_router(parse_router)
 app.include_router(users_router)
 app.include_router(calendar_router)
 app.include_router(user_data_router)
+app.include_router(resources_router)
 
 
 @app.get("/api/health")

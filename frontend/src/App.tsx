@@ -6,6 +6,8 @@ import FileUpload from './components/FileUpload';
 import StudyPlanView from './components/StudyPlanView';
 import ScheduleView from './components/ScheduleView';
 import PomodoroTimer from './components/PomodoroTimer';
+import starImg from './assets/star.png';
+import logoD from './assets/docket-logo-d.png';
 import { parseSyllabus, exportIcs, exportToGoogleCalendar, fetchUserCourses, saveUserCourse, deleteUserCourse, saveUserTaskProgress, recordColdCall } from './api';
 import type { UserDataResponse } from './api';
 import { useAuth } from './useAuth';
@@ -376,7 +378,7 @@ export default function App() {
       {/* Pomodoro Page */}
       {page === 'pomodoro' && (
         <div className="flex flex-col items-center pt-16 gap-4 px-4">
-          <img src="/src/assets/star.png" alt="star" className="w-16 h-16" />
+          <img src={starImg} alt="star" className="w-16 h-16" />
           <h2
             className="flex items-center text-5xl font-bold text-[#485C11]"
             style={{
@@ -386,7 +388,7 @@ export default function App() {
             }}
           >
             <span style={{ letterSpacing: '-0.05em' }}>Pomo</span>
-            <img src="/src/assets/docket-logo-d.png" alt="d" className="h-[4.5rem] -mr-6" style={{ marginTop: '2px', marginLeft: '-1rem' }} />
+            <img src={logoD} alt="d" className="h-[4.5rem] -mr-6" style={{ marginTop: '2px', marginLeft: '-1rem' }} />
             <span style={{ letterSpacing: '-0.05em' }}>oro</span>
           </h2>
           <PomodoroTimer />

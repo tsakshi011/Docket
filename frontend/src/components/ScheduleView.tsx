@@ -7,14 +7,6 @@ interface ScheduleViewProps {
   onLoadDemo?: () => void;
   savedCourses?: string[];
   onSwitchCourse?: (name: string) => void;
-  coldCalls?: Record<string, string>;
-  onColdCall?: (courseName: string) => void;
-}
-
-function getDaysSince(dateStr: string): number {
-  const then = new Date(dateStr);
-  const now = new Date();
-  return Math.floor((now.getTime() - then.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 const EVENT_ICONS: Record<string, typeof BookOpen> = {
@@ -44,7 +36,7 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-export default function ScheduleView({ data, onNavigate, onLoadDemo, savedCourses, onSwitchCourse, coldCalls, onColdCall }: ScheduleViewProps) {
+export default function ScheduleView({ data, onNavigate, onLoadDemo, savedCourses, onSwitchCourse }: ScheduleViewProps) {
   if (!data) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -52,32 +44,6 @@ export default function ScheduleView({ data, onNavigate, onLoadDemo, savedCourse
           <h2 className="font-[Inter] text-3xl font-bold text-[#485C11]">Schedule</h2>
           {savedCourses && savedCourses.length > 0 ? (
             <>
-              {/* Cold Call Tracker */}
-              <div className="bg-[#FFFBF1] rounded-2xl p-5 max-w-md mx-auto border border-[#485C11]/10">
-                <h3 className="font-[Inter] text-sm font-semibold text-[#485C11] uppercase tracking-wide mb-3">🧊 Days Since Cold Called</h3>
-                <div className="space-y-2">
-                  {savedCourses.map((name) => {
-                    const safeKey = name.replace(/\./g, '_').replace(/\$/g, '_');
-                    const lastDate = coldCalls?.[safeKey];
-                    const days = lastDate ? getDaysSince(lastDate) : null;
-                    return (
-                      <div key={name} className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#C1E1C1]/30 rounded-xl">
-                        <span className="text-sm font-medium text-[#485C11] text-left flex-1 truncate">{name}</span>
-                        <span className="text-2xl font-bold text-[#485C11] tabular-nums min-w-[2ch] text-right">
-                          {days !== null ? days : '—'}
-                        </span>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onColdCall?.(name); }}
-                          className="text-xs px-3 py-1.5 bg-[#485C11] text-white rounded-full hover:bg-[#3a4a0d] transition-colors whitespace-nowrap"
-                        >
-                          Got called!
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
               <p className="text-[#485C11]/70 max-w-md">
                 Your saved courses:
               </p>

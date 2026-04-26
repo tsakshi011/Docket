@@ -329,6 +329,8 @@ export default function App() {
                 onDeleteCourse={deleteCourse}
                 initialTaskProgress={getCurrentTaskProgress()}
                 onTaskProgressChange={handleTaskProgressChange}
+                coldCallDate={(() => { const safeKey = data.course_name.replace(/\./g, '_').replace(/\$/g, '_'); return coldCalls[safeKey]; })()}
+                onColdCall={handleColdCall}
               />
               </ErrorBoundary>
             )}
@@ -338,7 +340,7 @@ export default function App() {
 
       {/* Schedule Page */}
       {page === 'schedule' && (
-        <ScheduleView data={data} onNavigate={handleNavigate} onLoadDemo={handleLoadDemo} savedCourses={savedCourses.map((c) => c.name)} onSwitchCourse={switchCourse} coldCalls={coldCalls} onColdCall={handleColdCall} />
+        <ScheduleView data={data} onNavigate={handleNavigate} onLoadDemo={handleLoadDemo} savedCourses={savedCourses.map((c) => c.name)} onSwitchCourse={switchCourse} />
       )}
     </div>
   );

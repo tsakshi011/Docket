@@ -9,7 +9,7 @@
        Observe  → we execute the tool and feed results back
        …repeat until the agent outputs {"action": "finish", ...}
     Decides which tools to call based on the syllabus content.
-    Self-evaluation by checkign coverate of topic before finishing.
+    Self-evaluation by checking coverate of topic before finishing.
     Triggers differen searches based on subject domain
 3.Parse the final JSON into a ``ResourceRecommendations`` Pydantic model.
 """

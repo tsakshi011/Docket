@@ -10,7 +10,7 @@ export async function parseSyllabus(file: File): Promise<ParseResponse> {
   formData.append('file', file);
 
   const response = await axios.post<ParseResponse>(`${API_BASE}/parse`, formData, {
-    timeout: 120000,
+    timeout: 240000,
   });
 
   return response.data;
@@ -22,7 +22,7 @@ export async function exportIcs(file: File): Promise<Blob> {
 
   const response = await axios.post(`${API_BASE}/export/ics`, formData, {
     responseType: 'blob',
-    timeout: 120000,
+    timeout: 240000,
   });
 
   return response.data;
@@ -59,7 +59,7 @@ export async function exportToGoogleCalendar(
   const response = await axios.post<CalendarExportResponse>(
     `${API_BASE}/calendar/export`,
     req,
-    { timeout: 120000 },
+    { timeout: 240000 },
   );
   return response.data;
 }
@@ -111,7 +111,7 @@ export async function recommendResources(
   const response = await axios.post<ResourceRecommendations>(
     `${API_BASE}/resources/recommend`,
     { course_name: courseName, semester, events },
-    { timeout: 120000 },
+    { timeout: 240000 },
   );
   return response.data;
 }

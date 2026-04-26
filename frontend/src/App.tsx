@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import NavBar from './components/NavBar';
 import HeroSection from './components/HeroSection';
 import FileUpload from './components/FileUpload';
@@ -9,12 +9,55 @@ import type { ParseResponse, AppStep } from './types';
 
 type Page = 'home' | 'upload' | 'schedule';
 
+interface SavedCourse {
+  name: string;
+  data: ParseResponse;
+}
+
+function loadSavedCourses(): SavedCourse[] {
+  try {
+    const raw = localStorage.getItem('docket_courses');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function App() {
   const [page, setPage] = useState<Page>('home');
   const [step, setStep] = useState<AppStep>('upload');
   const [data, setData] = useState<ParseResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [savedCourses, setSavedCourses] = useState<SavedCourse[]>(loadSavedCourses);
+
+  useEffect(() => {
+    localStorage.setItem('docket_courses', JSON.stringify(savedCourses));
+  }, [savedCourses]);
+
+  const saveCourse = (courseData: ParseResponse) => {
+    setSavedCourses((prev) => {
+      const filtered = prev.filter((c) => c.name !== courseData.course_name);
+      return [...filtered, { name: courseData.course_name, data: courseData }];
+    });
+  };
+
+  const switchCourse = (courseName: string) => {
+    const course = savedCourses.find((c) => c.name === courseName);
+    if (course) {
+      setData(course.data);
+      setStep('review');
+      setPage('upload');
+    }
+  };
+
+  const deleteCourse = (courseName: string) => {
+    setSavedCourses((prev) => prev.filter((c) => c.name !== courseName));
+    if (data?.course_name === courseName) {
+      setData(null);
+      setStep('upload');
+    }
+  };
 
   const handleSubmit = async (f: File) => {
     setFile(f);
@@ -24,6 +67,7 @@ export default function App() {
     try {
       const result = await parseSyllabus(f);
       setData(result);
+      saveCourse(result);
       setStep('review');
       setPage('upload');
     } catch (err: unknown) {
@@ -61,7 +105,7 @@ export default function App() {
   };
 
   const handleLoadDemo = () => {
-    setData({
+    const demoData: ParseResponse = {
       course_name: 'CS 131 - Programming Languages',
       semester: 'Fall 2026',
       instructor: 'Prof. Sarah Chen',
@@ -87,7 +131,9 @@ export default function App() {
       weekly_summary: ['Week 3: HW1 due', 'Week 4: Quiz 1', 'Week 7: MIDTERM', 'Week 14: Final project due', 'Week 15: FINAL EXAM'],
       warnings: ['Heavy week: Midterm Oct 20 — start reviewing by Oct 14', 'Final project Dec 8 and Final Exam Dec 15 — only 1 week gap'],
       raw_text_preview: 'CS 131 - Programming Languages, Fall 2026...',
-    });
+    };
+    setData(demoData);
+    saveCourse(demoData);
     setStep('review');
     setPage('upload');
   };
@@ -144,6 +190,9 @@ export default function App() {
                 data={data}
                 onExportIcs={handleExportIcs}
                 onReset={handleReset}
+                savedCourses={savedCourses.map((c) => c.name)}
+                onSwitchCourse={switchCourse}
+                onDeleteCourse={deleteCourse}
               />
             )}
           </div>

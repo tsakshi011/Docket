@@ -1,8 +1,8 @@
 import axios from 'axios';
 import type { ParseResponse, CalendarExportRequest, CalendarExportResponse, ResourceRecommendations, SyllabusEvent } from './types';
 
-const API_BASE = import.meta.env.PROD
-  ? 'https://syllabus-to-calendar-vfegtvvl.fly.dev/api'
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
   : '/api';
 
 export async function parseSyllabus(file: File): Promise<ParseResponse> {

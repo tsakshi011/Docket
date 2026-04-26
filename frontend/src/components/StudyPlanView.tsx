@@ -18,6 +18,7 @@ import {
   Circle,
 } from 'lucide-react';
 import type { ParseResponse, StudyBlock } from '../types';
+import starImg from '../assets/star.png';
 import { generateGcalLink } from '../api';
 
 interface TaskProgressData {
@@ -37,6 +38,14 @@ interface StudyPlanViewProps {
   onDeleteCourse?: (name: string) => void;
   initialTaskProgress?: TaskProgressData;
   onTaskProgressChange?: (courseName: string, completedItems: string[], customTasks: TaskItem[]) => void;
+  coldCallDate?: string;
+  onColdCall?: (courseName: string) => void;
+}
+
+function getDaysSince(dateStr: string): number {
+  const then = new Date(dateStr);
+  const now = new Date();
+  return Math.floor((now.getTime() - then.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 const EVENT_TYPE_STYLES: Record<string, { bg: string; text: string; icon: typeof BookOpen }> = {
@@ -79,7 +88,7 @@ interface TaskItem {
   completed: boolean;
 }
 
-export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset, savedCourses, onSwitchCourse, onDeleteCourse, initialTaskProgress, onTaskProgressChange }: StudyPlanViewProps) {
+export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset, savedCourses, onSwitchCourse, onDeleteCourse, initialTaskProgress, onTaskProgressChange, coldCallDate, onColdCall }: StudyPlanViewProps) {
   const [showStudyBlocks, setShowStudyBlocks] = useState(true);
   const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks' | 'tasks'>('timeline');
   const [tasks, setTasks] = useState<TaskItem[]>(initialTaskProgress?.custom_tasks ?? []);
@@ -195,6 +204,25 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
           <h1 className="font-[Inter] text-2xl font-bold text-[#485C11]">{data.course_name}</h1>
         )}
         <p className="text-[#485C11]/70">{data.semester}{data.instructor ? ` — ${data.instructor}` : ''}</p>
+      </div>
+
+      {/* Cold Call Tracker */}
+      <div className="bg-[#FFFBF1] rounded-xl p-4 flex items-center justify-between border border-[#485C11]/10">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🧊</span>
+          <span className="text-sm font-medium text-[#485C11]">Days since cold called</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-3xl font-bold text-[#485C11] tabular-nums">
+            {coldCallDate ? getDaysSince(coldCallDate) : '\u2014'}
+          </span>
+          <button
+            onClick={() => onColdCall?.(data.course_name)}
+            className="text-xs px-3 py-1.5 bg-[#485C11] text-white rounded-full hover:bg-[#3a4a0d] transition-colors whitespace-nowrap"
+          >
+            Got called!
+          </button>
+        </div>
       </div>
 
       {/* Warnings */}

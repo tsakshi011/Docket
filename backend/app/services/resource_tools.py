@@ -1,28 +1,66 @@
 """Tools that the resource-routing agent can call autonomously.
 
-Each public function here is registered as a tool the LLM can invoke via
-Groq's function-calling API.  The functions do the actual I/O (web search,
-etc.) and return plain-text observations the agent uses for its next
-reasoning step.
+Each public function here is registered as a tool the LLM can invoke.
+The functions do the actual I/O (web search via Tavily) and return
+plain-text observations the agent uses for its next reasoning step.
 
 Design notes
 ------------
-* DuckDuckGo search is free and keyless — perfect for a hackathon MVP.
+* Tavily is purpose-built for AI agents — returns clean, structured results
+  with no CAPTCHA issues.  Free tier: 1 000 searches / month.
 * Every tool returns a *string* (the "observation") so the agent loop stays
   simple: Thought → Action → Observation → Thought …
-* We cap results to keep token usage low on the small 8B model.
+* We cap results to keep token usage low.
 """
 
 from __future__ import annotations
 
 import json
 import logging
-import urllib.parse
+import os
 from typing import Any
 
-from duckduckgo_search import DDGS
+from tavily import TavilyClient
 
 logger = logging.getLogger(__name__)
+
+
+def _get_tavily() -> TavilyClient:
+    api_key = os.environ.get("TAVILY_API_KEY", "")
+    if not api_key:
+        raise RuntimeError(
+            "TAVILY_API_KEY is not set. Get a free key at https://tavily.com"
+        )
+    return TavilyClient(api_key=api_key)
+
+
+def _tavily_search(
+    query: str,
+    *,
+    max_results: int = 5,
+    include_domains: list[str] | None = None,
+) -> str:
+    """Run a Tavily search and return JSON results."""
+    try:
+        client = _get_tavily()
+        response = client.search(
+            query=query,
+            max_results=max_results,
+            include_domains=include_domains or [],
+        )
+        results = [
+            {
+                "title": r.get("title", ""),
+                "url": r.get("url", ""),
+                "snippet": r.get("content", "")[:300],
+            }
+            for r in response.get("results", [])
+        ]
+        return json.dumps(results, indent=2)
+    except Exception as exc:
+        logger.warning("Tavily search failed: %s", exc)
+        return json.dumps({"error": str(exc)})
+
 
 # ---------------------------------------------------------------------------
 # Tool: general web search
@@ -33,17 +71,7 @@ def search_web(query: str, max_results: int = 5) -> str:
 
     Returns a JSON list of {title, url, snippet} objects.
     """
-    try:
-        with DDGS() as ddgs:
-            hits = list(ddgs.text(query, max_results=max_results))
-        results = [
-            {"title": h["title"], "url": h["href"], "snippet": h["body"]}
-            for h in hits
-        ]
-        return json.dumps(results, indent=2)
-    except Exception as exc:
-        logger.warning("search_web failed: %s", exc)
-        return json.dumps({"error": str(exc)})
+    return _tavily_search(query, max_results=max_results)
 
 
 # ---------------------------------------------------------------------------
@@ -53,21 +81,13 @@ def search_web(query: str, max_results: int = 5) -> str:
 def search_youtube(query: str, max_results: int = 5) -> str:
     """Search YouTube for educational videos on a topic.
 
-    Uses DuckDuckGo scoped to site:youtube.com so no API key is needed.
     Returns a JSON list of {title, url, snippet}.
     """
-    scoped = f"site:youtube.com {query}"
-    try:
-        with DDGS() as ddgs:
-            hits = list(ddgs.text(scoped, max_results=max_results))
-        results = [
-            {"title": h["title"], "url": h["href"], "snippet": h["body"]}
-            for h in hits
-        ]
-        return json.dumps(results, indent=2)
-    except Exception as exc:
-        logger.warning("search_youtube failed: %s", exc)
-        return json.dumps({"error": str(exc)})
+    return _tavily_search(
+        query,
+        max_results=max_results,
+        include_domains=["youtube.com", "youtu.be"],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -77,24 +97,20 @@ def search_youtube(query: str, max_results: int = 5) -> str:
 def search_academic(query: str, max_results: int = 5) -> str:
     """Search for academic textbooks, papers, and course materials.
 
-    Scoped to educational domains (MIT OCW, OpenStax, Google Scholar, etc.).
+    Scoped to educational domains (MIT OCW, OpenStax, Coursera, etc.).
     """
-    scoped = (
-        f"{query} "
-        "(site:ocw.mit.edu OR site:openstax.org OR site:scholar.google.com "
-        "OR site:coursera.org OR site:edx.org OR site:khanacademy.org)"
+    return _tavily_search(
+        query,
+        max_results=max_results,
+        include_domains=[
+            "ocw.mit.edu",
+            "openstax.org",
+            "coursera.org",
+            "edx.org",
+            "khanacademy.org",
+            "scholar.google.com",
+        ],
     )
-    try:
-        with DDGS() as ddgs:
-            hits = list(ddgs.text(scoped, max_results=max_results))
-        results = [
-            {"title": h["title"], "url": h["href"], "snippet": h["body"]}
-            for h in hits
-        ]
-        return json.dumps(results, indent=2)
-    except Exception as exc:
-        logger.warning("search_academic failed: %s", exc)
-        return json.dumps({"error": str(exc)})
 
 
 # ---------------------------------------------------------------------------
@@ -106,22 +122,18 @@ def search_practice(query: str, max_results: int = 5) -> str:
 
     Scoped to sites known for practice content.
     """
-    scoped = (
-        f"{query} practice problems exercises "
-        "(site:leetcode.com OR site:khanacademy.org OR site:brilliant.org "
-        "OR site:geeksforgeeks.org OR site:hackerrank.com OR site:quizlet.com)"
+    return _tavily_search(
+        f"{query} practice problems",
+        max_results=max_results,
+        include_domains=[
+            "leetcode.com",
+            "khanacademy.org",
+            "brilliant.org",
+            "geeksforgeeks.org",
+            "hackerrank.com",
+            "quizlet.com",
+        ],
     )
-    try:
-        with DDGS() as ddgs:
-            hits = list(ddgs.text(scoped, max_results=max_results))
-        results = [
-            {"title": h["title"], "url": h["href"], "snippet": h["body"]}
-            for h in hits
-        ]
-        return json.dumps(results, indent=2)
-    except Exception as exc:
-        logger.warning("search_practice failed: %s", exc)
-        return json.dumps({"error": str(exc)})
 
 
 # ---------------------------------------------------------------------------

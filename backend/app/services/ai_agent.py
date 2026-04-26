@@ -173,8 +173,14 @@ def _sanitize_events(events: list[dict]) -> list[dict]:
             continue
         if not ev.get("title") or not ev.get("date"):
             continue
-        if ev.get("duration_minutes") is None:
+        dm = ev.get("duration_minutes")
+        if dm is None or dm == "null" or dm == "":
             ev.pop("duration_minutes", None)
+        elif isinstance(dm, str):
+            try:
+                ev["duration_minutes"] = int(dm)
+            except ValueError:
+                ev.pop("duration_minutes", None)
         cleaned.append(ev)
     return cleaned
 

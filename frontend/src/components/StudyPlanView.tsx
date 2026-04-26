@@ -18,6 +18,7 @@ import {
   Circle,
 } from 'lucide-react';
 import type { ParseResponse, StudyBlock } from '../types';
+import starImg from '../assets/star.png';
 import { generateGcalLink } from '../api';
 
 interface TaskProgressData {
@@ -208,7 +209,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
       {/* Cold Call Tracker */}
       <div className="bg-[#FFFBF1] rounded-xl p-4 flex items-center justify-between border border-[#485C11]/10">
         <div className="flex items-center gap-3">
-          <span className="text-lg">{'\ud83e\uddca'}</span>
+          <img src={starImg} alt="star" className="w-6 h-6" />
           <span className="text-sm font-medium text-[#485C11]">Days since cold called</span>
         </div>
         <div className="flex items-center gap-3">

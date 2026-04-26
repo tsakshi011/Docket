@@ -254,7 +254,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
         ))
         return
 
-    ctx.logger.info("Searching resources for: %s", user_text[:100])
+    ctx.logger.info(f"Searching resources for: {user_text[:100]}")
     response_text = run_resource_search(user_text, groq_key, tavily_key)
     await ctx.send(sender, create_text_chat(response_text))
 

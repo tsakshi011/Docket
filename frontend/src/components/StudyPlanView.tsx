@@ -93,12 +93,10 @@ interface TaskItem {
 
 export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset, savedCourses, onSwitchCourse, onDeleteCourse, initialTaskProgress, onTaskProgressChange, coldCallDate, onColdCall }: StudyPlanViewProps) {
   const [showStudyBlocks, setShowStudyBlocks] = useState(true);
-<<<<<<< HEAD
-  const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks' | 'tasks' | 'outline'>('timeline');
+  const [activeTab, setActiveTab] = useState<
+    'timeline' | 'events' | 'blocks' | 'tasks' | 'outline' | 'resources'
+  >('timeline');
   const [expandedTopics, setExpandedTopics] = useState<Set<number>>(new Set());
-=======
-  const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks' | 'tasks' | 'resources'>('timeline');
->>>>>>> sakshi/resources
   const [tasks, setTasks] = useState<TaskItem[]>(initialTaskProgress?.custom_tasks ?? []);
   const [newTask, setNewTask] = useState('');
   const [completedItems, setCompletedItems] = useState<Set<string>>(new Set(initialTaskProgress?.completed_items ?? []));
@@ -330,11 +328,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
 
       {/* Tabs */}
       <div className="flex border-b">
-<<<<<<< HEAD
-        {(['timeline', 'events', 'blocks', 'tasks', 'outline'] as const).map((tab) => (
-=======
         {(['timeline', 'events', 'blocks', 'tasks', 'resources'] as const).map((tab) => (
->>>>>>> sakshi/resources
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -344,11 +338,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-<<<<<<< HEAD
-            {tab === 'timeline' ? `Timeline${completedItems.size > 0 ? ` (${completedItems.size}/${allItems.length})` : ''}` : tab === 'events' ? `Events (${(data.syllabus_events ?? []).length})` : tab === 'blocks' ? `Study Plan (${(data.study_blocks ?? []).length})` : tab === 'tasks' ? `Tasks (${allCompletedCount}/${allTaskCount})` : `Outline (${(data.course_outline ?? []).length})`}
-=======
             {tab === 'timeline' ? `Timeline${completedItems.size > 0 ? ` (${completedItems.size}/${allItems.length})` : ''}` : tab === 'events' ? `Events (${(data.syllabus_events ?? []).length})` : tab === 'blocks' ? `Study Plan (${(data.study_blocks ?? []).length})` : tab === 'resources' ? `Resources${localResources ? ` (${localResources.general_resources.length + localResources.topic_resources.reduce((a, t) => a + t.resources.length, 0)})` : ''}` : `Tasks (${allCompletedCount}/${allTaskCount})`}
->>>>>>> sakshi/resources
           </button>
         ))}
       </div>
@@ -622,94 +612,6 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
         </div>
       )}
 
-<<<<<<< HEAD
-      {/* Outline view */}
-      {activeTab === 'outline' && (
-        <div className="space-y-3">
-          {(data.course_outline ?? []).length === 0 ? (
-            <div className="text-center py-8 text-[#485C11]/50 text-sm">
-              No outline generated yet. Upload a syllabus to generate one.
-            </div>
-          ) : (
-            (data.course_outline ?? []).map((section, i) => {
-              const isExpanded = expandedTopics.has(i);
-              return (
-                <div key={i} className="bg-[#FFFBF1] border border-[#485C11]/20 rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => {
-                      setExpandedTopics((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(i)) next.delete(i);
-                        else next.add(i);
-                        return next;
-                      });
-                    }}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#F5EDD6] transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">📋</span>
-                      <span className="font-semibold text-[#485C11] text-sm">{section.topic}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-[#485C11]/50">
-                        {(section.subtopics ?? []).length} subtopic{(section.subtopics ?? []).length !== 1 ? 's' : ''}
-                      </span>
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4 text-[#485C11]/50" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-[#485C11]/50" />
-                      )}
-                    </div>
-                  </button>
-                  {isExpanded && (
-                    <div className="px-4 pb-4 space-y-3">
-                      {(section.key_concepts ?? []).length > 0 && (
-                        <div className="bg-[#F5EDD6] rounded-lg p-3">
-                          <p className="text-xs font-medium text-[#485C11]/70 mb-1">Key Concepts</p>
-                          <ul className="space-y-1">
-                            {(section.key_concepts ?? []).map((concept, j) => (
-                              <li key={j} className="text-xs text-[#485C11] flex items-start gap-1.5">
-                                <span className="text-[#485C11]/40 mt-0.5">•</span>
-                                {concept}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {(section.subtopics ?? []).map((sub, k) => (
-                        <div key={k} className="border-l-2 border-[#485C11]/20 pl-3 space-y-1.5">
-                          <p className="font-medium text-sm text-[#485C11]">{sub.name}</p>
-                          {(sub.rules ?? []).length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium text-[#485C11]/50 mb-0.5">Rules</p>
-                              {(sub.rules ?? []).map((rule, r) => (
-                                <p key={r} className="text-xs text-[#485C11]/80 ml-2">• {rule}</p>
-                              ))}
-                            </div>
-                          )}
-                          {(sub.cases ?? []).length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium text-[#485C11]/50 mb-0.5">Cases</p>
-                              {(sub.cases ?? []).map((c, ci) => (
-                                <p key={ci} className="text-xs text-[#485C11]/80 ml-2 italic">⚖️ {c}</p>
-                              ))}
-                            </div>
-                          )}
-                          {sub.notes && (
-                            <p className="text-xs text-[#485C11]/60 bg-[#F5EDD6] rounded px-2 py-1">
-                              💡 {sub.notes}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
-=======
       {/* Resources tab */}
       {activeTab === 'resources' && (
         localResources ? (
@@ -731,7 +633,6 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
             </button>
           </div>
         )
->>>>>>> sakshi/resources
       )}
 
       {/* Weekly Summary */}

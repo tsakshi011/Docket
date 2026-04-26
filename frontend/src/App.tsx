@@ -359,7 +359,7 @@ export default function App() {
             }}
           >
             <span>Pomo</span>
-            <img src="/src/assets/docket-logo-d.png" alt="d" className="h-[4.5rem] -mr-7" style={{ marginTop: '2px', marginLeft: '-1.2rem' }} />
+            <img src="/src/assets/docket-logo-d.png" alt="d" className="h-[4.5rem] -mr-7" style={{ marginTop: '2px', marginLeft: '-1.5rem' }} />
             <span>oro</span>
           </h2>
           <PomodoroTimer />

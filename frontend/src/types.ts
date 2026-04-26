@@ -21,6 +21,19 @@ export interface StudyBlock {
   selected?: boolean;
 }
 
+export interface OutlineSubtopic {
+  name: string;
+  rules: string[];
+  cases: string[];
+  notes: string;
+}
+
+export interface OutlineSection {
+  topic: string;
+  subtopics: OutlineSubtopic[];
+  key_concepts: string[];
+}
+
 export interface ParseResponse {
   course_name: string;
   semester: string;
@@ -29,6 +42,7 @@ export interface ParseResponse {
   study_blocks: StudyBlock[];
   weekly_summary: string[];
   warnings: string[];
+  course_outline: OutlineSection[];
   raw_text_preview: string;
 }
 

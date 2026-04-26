@@ -5,7 +5,8 @@ import HeroSection from './components/HeroSection';
 import FileUpload from './components/FileUpload';
 import StudyPlanView from './components/StudyPlanView';
 import ScheduleView from './components/ScheduleView';
-import { parseSyllabus, exportIcs, exportToGoogleCalendar } from './api';
+import { parseSyllabus, exportIcs, exportToGoogleCalendar, fetchUserCourses, saveUserCourse, deleteUserCourse, saveUserTaskProgress } from './api';
+import type { UserDataResponse } from './api';
 import { useAuth } from './useAuth';
 import type { ParseResponse, AppStep, CalendarExportResponse } from './types';
 
@@ -60,17 +61,41 @@ export default function App() {
   const [gcalExporting, setGcalExporting] = useState(false);
   const [gcalResult, setGcalResult] = useState<CalendarExportResponse | null>(null);
 
-  const { googleAccessToken, signInWithGoogle } = useAuth();
+  const [taskProgress, setTaskProgress] = useState<UserDataResponse['task_progress']>({});
+
+  const { user, googleAccessToken, signInWithGoogle } = useAuth();
 
   useEffect(() => {
     localStorage.setItem('docket_courses', JSON.stringify(savedCourses));
   }, [savedCourses]);
+
+  // Load courses from MongoDB when user signs in
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    fetchUserCourses(user.uid)
+      .then((res) => {
+        if (cancelled) return;
+        if (res.courses.length > 0) {
+          setSavedCourses(res.courses);
+          localStorage.setItem('docket_courses', JSON.stringify(res.courses));
+        }
+        if (res.task_progress) {
+          setTaskProgress(res.task_progress);
+        }
+      })
+      .catch(() => { /* backend may not be running */ });
+    return () => { cancelled = true; };
+  }, [user?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveCourse = (courseData: ParseResponse) => {
     setSavedCourses((prev) => {
       const filtered = prev.filter((c) => c.name !== courseData.course_name);
       return [...filtered, { name: courseData.course_name, data: courseData }];
     });
+    if (user) {
+      saveUserCourse(user.uid, courseData.course_name, courseData).catch(() => {});
+    }
   };
 
   const switchCourse = (courseName: string) => {
@@ -88,6 +113,26 @@ export default function App() {
       setData(null);
       setStep('upload');
     }
+    if (user) {
+      deleteUserCourse(user.uid, courseName).catch(() => {});
+    }
+  };
+
+  const handleTaskProgressChange = (courseName: string, completedItems: string[], customTasks: { id: string; text: string; completed: boolean }[]) => {
+    const safeKey = courseName.replace(/\./g, '_').replace(/\$/g, '_');
+    setTaskProgress((prev) => ({
+      ...prev,
+      [safeKey]: { completed_items: completedItems, custom_tasks: customTasks },
+    }));
+    if (user) {
+      saveUserTaskProgress(user.uid, courseName, completedItems, customTasks).catch(() => {});
+    }
+  };
+
+  const getCurrentTaskProgress = () => {
+    if (!data) return undefined;
+    const safeKey = data.course_name.replace(/\./g, '_').replace(/\$/g, '_');
+    return taskProgress[safeKey];
   };
 
   const handleSubmit = async (f: File) => {
@@ -269,6 +314,8 @@ export default function App() {
                 savedCourses={savedCourses.map((c) => c.name)}
                 onSwitchCourse={switchCourse}
                 onDeleteCourse={deleteCourse}
+                initialTaskProgress={getCurrentTaskProgress()}
+                onTaskProgressChange={handleTaskProgressChange}
               />
               </ErrorBoundary>
             )}

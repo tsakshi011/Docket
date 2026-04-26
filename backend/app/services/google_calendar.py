@@ -68,26 +68,31 @@ def study_block_to_gcal(block: StudyBlock) -> dict:
     }
 
 
-async def create_calendar(name: str, token: str) -> dict:
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            f"{CALENDAR_API}/calendars",
-            headers=_headers(token),
-            json={"summary": name, "timeZone": "America/Los_Angeles"},
-        )
-        resp.raise_for_status()
-        return resp.json()
+GCAL_TIMEOUT = httpx.Timeout(30.0, connect=10.0)
 
 
-async def insert_event(calendar_id: str, event_body: dict, token: str) -> dict:
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            f"{CALENDAR_API}/calendars/{calendar_id}/events",
-            headers=_headers(token),
-            json=event_body,
-        )
-        resp.raise_for_status()
-        return resp.json()
+async def create_calendar(
+    name: str, token: str, client: httpx.AsyncClient,
+) -> dict:
+    resp = await client.post(
+        f"{CALENDAR_API}/calendars",
+        headers=_headers(token),
+        json={"summary": name, "timeZone": "America/Los_Angeles"},
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+async def insert_event(
+    calendar_id: str, event_body: dict, token: str, client: httpx.AsyncClient,
+) -> dict:
+    resp = await client.post(
+        f"{CALENDAR_API}/calendars/{calendar_id}/events",
+        headers=_headers(token),
+        json=event_body,
+    )
+    resp.raise_for_status()
+    return resp.json()
 
 
 async def export_plan_to_google_calendar(
@@ -96,17 +101,24 @@ async def export_plan_to_google_calendar(
     study_blocks: list[StudyBlock],
     access_token: str,
 ) -> dict:
-    cal = await create_calendar(f"{course_name} - Study Plan", access_token)
-    calendar_id = cal["id"]
-    created = 0
+    async with httpx.AsyncClient(timeout=GCAL_TIMEOUT) as client:
+        cal = await create_calendar(
+            f"{course_name} - Study Plan", access_token, client,
+        )
+        calendar_id = cal["id"]
+        created = 0
 
-    for ev in syllabus_events:
-        await insert_event(calendar_id, syllabus_event_to_gcal(ev), access_token)
-        created += 1
+        for ev in syllabus_events:
+            await insert_event(
+                calendar_id, syllabus_event_to_gcal(ev), access_token, client,
+            )
+            created += 1
 
-    for block in study_blocks:
-        await insert_event(calendar_id, study_block_to_gcal(block), access_token)
-        created += 1
+        for block in study_blocks:
+            await insert_event(
+                calendar_id, study_block_to_gcal(block), access_token, client,
+            )
+            created += 1
 
     return {
         "calendar_id": calendar_id,

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import connect_db, close_db
 from app.routers.parse import router as parse_router
 from app.routers.users import router as users_router
+from app.routers.calendar import router as calendar_router
 
 
 @asynccontextmanager
@@ -32,6 +33,7 @@ app.add_middleware(
 
 app.include_router(parse_router)
 app.include_router(users_router)
+app.include_router(calendar_router)
 
 
 @app.get("/api/health")

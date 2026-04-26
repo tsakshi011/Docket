@@ -8,7 +8,7 @@ class SyllabusEvent(BaseModel):
     time: Optional[str] = None  # HH:MM (24h)
     duration_minutes: int = 60
     event_type: str  # exam, assignment, quiz, reading, lecture, lab, project, other
-    description: str = ""
+    description: Optional[str] = ""
     weight: Optional[str] = None  # e.g., "20% of final grade"
 
 
@@ -19,7 +19,7 @@ class StudyBlock(BaseModel):
     duration_minutes: int = 60
     block_type: str  # study_session, draft_deadline, outline, review, practice, break_down
     related_event: str  # title of the parent assignment/exam this supports
-    description: str = ""
+    description: Optional[str] = ""
     priority: str = "medium"  # low, medium, high, critical
 
 
@@ -52,3 +52,16 @@ class ParseResponse(BaseModel):
     weekly_summary: list[str]
     warnings: list[str]
     raw_text_preview: str
+
+
+class CalendarExportRequest(BaseModel):
+    course_name: str
+    access_token: str
+    syllabus_events: list[SyllabusEvent]
+    study_blocks: list[StudyBlock]
+
+
+class CalendarExportResponse(BaseModel):
+    calendar_id: str
+    calendar_url: str
+    events_created: int

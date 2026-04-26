@@ -37,10 +37,10 @@ def _get_tavily() -> TavilyClient:
 def _tavily_search(
     query: str,
     *,
-    max_results: int = 5,
+    max_results: int = 3,
     include_domains: list[str] | None = None,
 ) -> str:
-    """Run a Tavily search and return JSON results."""
+    """Run a Tavily search and return compact JSON results."""
     try:
         client = _get_tavily()
         response = client.search(
@@ -52,11 +52,11 @@ def _tavily_search(
             {
                 "title": r.get("title", ""),
                 "url": r.get("url", ""),
-                "snippet": r.get("content", "")[:300],
+                "snippet": r.get("content", "")[:200],
             }
             for r in response.get("results", [])
         ]
-        return json.dumps(results, indent=2)
+        return json.dumps(results)
     except Exception as exc:
         logger.warning("Tavily search failed: %s", exc)
         return json.dumps({"error": str(exc)})
@@ -66,7 +66,7 @@ def _tavily_search(
 # Tool: general web search
 # ---------------------------------------------------------------------------
 
-def search_web(query: str, max_results: int = 5) -> str:
+def search_web(query: str, max_results: int = 3) -> str:
     """Search the web for educational resources.
 
     Returns a JSON list of {title, url, snippet} objects.
@@ -78,7 +78,7 @@ def search_web(query: str, max_results: int = 5) -> str:
 # Tool: YouTube video search
 # ---------------------------------------------------------------------------
 
-def search_youtube(query: str, max_results: int = 5) -> str:
+def search_youtube(query: str, max_results: int = 3) -> str:
     """Search YouTube for educational videos on a topic.
 
     Returns a JSON list of {title, url, snippet}.
@@ -94,7 +94,7 @@ def search_youtube(query: str, max_results: int = 5) -> str:
 # Tool: academic / textbook search
 # ---------------------------------------------------------------------------
 
-def search_academic(query: str, max_results: int = 5) -> str:
+def search_academic(query: str, max_results: int = 3) -> str:
     """Search for academic textbooks, papers, and course materials.
 
     Scoped to educational domains (MIT OCW, OpenStax, Coursera, etc.).
@@ -117,7 +117,7 @@ def search_academic(query: str, max_results: int = 5) -> str:
 # Tool: practice problem search
 # ---------------------------------------------------------------------------
 
-def search_practice(query: str, max_results: int = 5) -> str:
+def search_practice(query: str, max_results: int = 3) -> str:
     """Search for practice problems, exercises, and problem sets.
 
     Scoped to sites known for practice content.

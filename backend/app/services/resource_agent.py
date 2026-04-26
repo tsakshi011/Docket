@@ -34,73 +34,34 @@ from app.services.resource_tools import TOOL_DISPATCH
 logger = logging.getLogger(__name__)
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-GROQ_MODEL = "llama-3.3-70b-versatile"
-GROQ_FALLBACK_MODEL = "llama-3.1-8b-instant"
-MAX_AGENT_TURNS = 6  # safety cap so we don't loop forever
-_BASE_DELAY = 8  # seconds between agent turns (Groq free tier: 30 req/min)
-_MAX_RETRIES = 3  # retries per LLM call on rate-limit errors
+GROQ_MODEL = "llama-3.1-8b-instant"  # default: cheap, fast, separate TPD quota
+GROQ_FALLBACK_MODEL = "llama-3.3-70b-versatile"  # fallback: higher quality
+MAX_AGENT_TURNS = 5  # safety cap so we don't loop forever
+_BASE_DELAY = 6  # seconds between agent turns (Groq free tier: 30 req/min)
+_MAX_RETRIES = 2  # retries per LLM call on rate-limit errors
+_MAX_OBSERVATION_CHARS = 1500  # truncate tool results to save tokens
+_CONTEXT_WINDOW = 3  # keep only this many recent tool observations
 
 RESOURCE_AGENT_SYSTEM_PROMPT = """\
-You are an expert academic resource curator agent. Your job is to find the
-BEST study resources for a university course by searching the web.
+You are a study-resource curator. Search the web and return the best FREE
+resources for a university course.
 
-You have access to these tools:
-- search_web(query): general web search
-- search_youtube(query): find educational YouTube videos
-- search_academic(query): search MIT OCW, OpenStax, Coursera, Khan Academy, edX
-- search_practice(query): find practice problems on LeetCode, Brilliant, etc.
+Tools: search_web, search_youtube, search_academic, search_practice.
 
-STRATEGY:
-1. First, identify the subject domain and 2-3 key topics from the syllabus.
-2. For EACH key topic, use ONE tool to find relevant resources.
-   - For conceptual topics → search_academic
-   - For problem-solving topics → search_practice
-   - For general/mixed → search_web
-3. Use ONE search_youtube call for the overall course (not per topic).
-4. Finish as soon as you have at least 1-2 resources per topic. Do NOT
-   over-search — prefer fewer, high-quality searches over many redundant ones.
-5. You have a BUDGET of 4-5 tool calls total. Be efficient.
+Rules:
+- Make at most 3-4 tool calls total, then finish.
+- ONE search_youtube for the whole course; ONE tool per key topic.
+- Use REAL URLs from search results only.
+- Respond with a JSON object every turn. No markdown.
 
-RESPONSE FORMAT — you MUST respond with a JSON object on every turn:
+Tool call: {"thought":"...","action":"<tool>","action_input":{"query":"..."}}
+Finish:    {"thought":"done","action":"finish","action_input":<RESULT>}
 
-To call a tool:
-{"thought": "I need to find videos about ...", "action": "search_youtube", "action_input": {"query": "linear algebra eigenvalues tutorial"}}
-
-To finish (after collecting enough resources):
-{"thought": "I have enough resources for all topics.", "action": "finish", "action_input": <FINAL_JSON>}
-
-Where <FINAL_JSON> matches this schema:
-{
-  "course_name": "string",
-  "subject_domain": "string (e.g. mathematics, computer_science, biology)",
-  "general_resources": [
-    {
-      "title": "string",
-      "url": "string or null",
-      "resource_type": "video|textbook|practice|article|tool|course",
-      "platform": "string (e.g. Khan Academy, YouTube, MIT OCW)",
-      "relevance": "string (why this resource helps)",
-      "priority": "high|medium|low"
-    }
-  ],
-  "topic_resources": [
-    {
-      "topic": "string",
-      "related_events": ["string (titles of related syllabus events)"],
-      "resources": [ ...same shape as above... ]
-    }
-  ],
-  "study_tips": ["string (1-3 actionable study tips for this course)"]
-}
-
-IMPORTANT RULES:
-- Only include resources you actually found via tool searches — use REAL URLs
-  from the search results, not made-up ones.
-- Aim for 2-4 resources per topic and 2-3 general resources.
-- Prioritize FREE resources.
-- Be efficient — don't search for the same thing twice.
-- You MUST call finish to complete your task.
-- ONLY output valid JSON. No markdown, no extra text.
+RESULT schema:
+{"course_name":"str","subject_domain":"str",
+ "general_resources":[{"title":"str","url":"str|null","resource_type":"video|textbook|practice|article|tool|course","platform":"str","relevance":"str","priority":"high|medium|low"}],
+ "topic_resources":[{"topic":"str","related_events":["str"],"resources":[...same...]}],
+ "study_tips":["str"]}
 """
 
 
@@ -227,6 +188,16 @@ def _llm_call_with_retry(client: OpenAI, model: str, messages: list[dict]):
     return None
 
 
+def _trim_context(messages: list[dict]) -> None:
+    """Keep only the system prompt, initial user prompt, and the last
+    ``_CONTEXT_WINDOW`` assistant+user turn pairs.  Edits *in place*."""
+    prefix = 2  # system + initial user prompt
+    tail = messages[prefix:]
+    max_tail = _CONTEXT_WINDOW * 2  # each turn = assistant + user
+    if len(tail) > max_tail:
+        messages[prefix:] = tail[-max_tail:]
+
+
 def recommend_resources(
     parsed: ParsedSyllabus,
     plan: StudyPlan | None = None,
@@ -306,13 +277,18 @@ def recommend_resources(
         observation = _execute_action(action, action_input)
 
         # Truncate large observations to save tokens
-        if len(observation) > 3000:
-            observation = observation[:3000] + "\n... (results truncated)"
+        if len(observation) > _MAX_OBSERVATION_CHARS:
+            observation = observation[:_MAX_OBSERVATION_CHARS] + "…"
 
         messages.append({
             "role": "user",
-            "content": f"Tool result for {action}:\n{observation}\n\nContinue with the next action or call finish if you have enough resources.",
+            "content": f"Result({action}):\n{observation}",
         })
+
+        # Sliding window: drop old tool observations to keep context small.
+        # Keep system + initial user prompt (first 2 msgs) and the most
+        # recent _CONTEXT_WINDOW pairs of (assistant, user/tool-result).
+        _trim_context(messages)
 
     # Fallback: try to extract recommendations from the conversation
     logger.warning("Agent exhausted %d turns without calling finish()", MAX_AGENT_TURNS)

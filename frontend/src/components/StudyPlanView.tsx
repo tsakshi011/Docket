@@ -69,7 +69,15 @@ interface TaskItem {
   completed: boolean;
 }
 
-export default function StudyPlanView({ data, onExportIcs, onReset, savedCourses, onSwitchCourse, onDeleteCourse }: StudyPlanViewProps) {
+export default function StudyPlanView({ data: rawData, onExportIcs, onReset, savedCourses, onSwitchCourse, onDeleteCourse }: StudyPlanViewProps) {
+  const data = {
+    ...rawData,
+    syllabus_events: rawData.syllabus_events ?? [],
+    study_blocks: rawData.study_blocks ?? [],
+    warnings: rawData.warnings ?? [],
+    weekly_summary: rawData.weekly_summary ?? [],
+  };
+
   const [showStudyBlocks, setShowStudyBlocks] = useState(true);
   const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks' | 'tasks'>('timeline');
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -383,12 +391,12 @@ export default function StudyPlanView({ data, onExportIcs, onReset, savedCourses
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-[#485C11]/60">
               <span>{allCompletedCount} of {allTaskCount} completed</span>
-              <span>{Math.round((allCompletedCount / allTaskCount) * 100)}%</span>
+              <span>{allTaskCount > 0 ? Math.round((allCompletedCount / allTaskCount) * 100) : 0}%</span>
             </div>
             <div className="w-full bg-[#485C11]/10 rounded-full h-2">
               <div
                 className="bg-[#485C11] h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(allCompletedCount / allTaskCount) * 100}%` }}
+                style={{ width: `${allTaskCount > 0 ? (allCompletedCount / allTaskCount) * 100 : 0}%` }}
               />
             </div>
           </div>

@@ -354,7 +354,7 @@ export default function App() {
             className="flex items-center text-5xl font-bold text-[#485C11]"
             style={{
               fontFamily: '"Nimbus Roman No9 L", "Times New Roman", Georgia, serif',
-              WebkitTextStroke: '1px #FFFBF1',
+              WebkitTextStroke: '2.5px #FFFBF1',
               paintOrder: 'stroke fill',
             }}
           >

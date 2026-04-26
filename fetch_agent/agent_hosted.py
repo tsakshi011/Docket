@@ -7,6 +7,7 @@ Add these secrets in the Agentverse Secrets tab:
 """
 
 import json
+import os
 import requests
 from datetime import datetime
 from uuid import uuid4
@@ -242,9 +243,9 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
         ))
         return
 
-    # Get API keys from Agentverse secrets
-    groq_key = ctx.get_secret("GROQ_API_KEY")
-    tavily_key = ctx.get_secret("TAVILY_API_KEY")
+    # Get API keys from Agentverse secrets (injected as env vars)
+    groq_key = os.getenv("GROQ_API_KEY", "")
+    tavily_key = os.getenv("TAVILY_API_KEY", "")
 
     if not groq_key or not tavily_key:
         await ctx.send(sender, create_text_chat(
@@ -253,7 +254,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
         ))
         return
 
-    ctx.logger.info(f"Searching resources for: {user_text[:100]}")
+    ctx.logger.info("Searching resources for: %s", user_text[:100])
     response_text = run_resource_search(user_text, groq_key, tavily_key)
     await ctx.send(sender, create_text_chat(response_text))
 

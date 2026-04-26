@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
@@ -5,7 +6,14 @@ from pydantic import BaseModel
 
 from app.database import get_db
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/user-data", tags=["user-data"])
+
+_NO_DB_MSG = (
+    "Database not configured — data is only stored in your browser. "
+    "Set MONGODB_URI in the backend .env file to enable cloud persistence."
+)
 
 
 class SaveCourseRequest(BaseModel):
@@ -30,7 +38,7 @@ class ColdCallRequest(BaseModel):
 async def get_user_courses(uid: str):
     db = get_db()
     if db is None:
-        raise HTTPException(status_code=503, detail="Database not configured")
+        return {"courses": [], "task_progress": {}, "cold_calls": {}}
 
     doc = await db.user_data.find_one({"uid": uid}, {"_id": 0})
     if not doc:
@@ -46,7 +54,7 @@ async def get_user_courses(uid: str):
 async def save_course(req: SaveCourseRequest):
     db = get_db()
     if db is None:
-        raise HTTPException(status_code=503, detail="Database not configured")
+        raise HTTPException(status_code=503, detail=_NO_DB_MSG)
 
     now = datetime.now(timezone.utc)
 
@@ -83,7 +91,7 @@ async def save_course(req: SaveCourseRequest):
 async def delete_course(uid: str, course_name: str):
     db = get_db()
     if db is None:
-        raise HTTPException(status_code=503, detail="Database not configured")
+        raise HTTPException(status_code=503, detail=_NO_DB_MSG)
 
     await db.user_data.update_one(
         {"uid": uid},
@@ -99,7 +107,7 @@ async def delete_course(uid: str, course_name: str):
 async def save_task_progress(req: SaveTaskProgressRequest):
     db = get_db()
     if db is None:
-        raise HTTPException(status_code=503, detail="Database not configured")
+        raise HTTPException(status_code=503, detail=_NO_DB_MSG)
 
     now = datetime.now(timezone.utc)
     safe_key = req.course_name.replace(".", "_").replace("$", "_")
@@ -123,7 +131,7 @@ async def save_task_progress(req: SaveTaskProgressRequest):
 async def record_cold_call(req: ColdCallRequest):
     db = get_db()
     if db is None:
-        raise HTTPException(status_code=503, detail="Database not configured")
+        raise HTTPException(status_code=503, detail=_NO_DB_MSG)
 
     now = datetime.now(timezone.utc)
     safe_key = req.course_name.replace(".", "_").replace("$", "_")

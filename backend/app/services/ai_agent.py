@@ -22,11 +22,26 @@ GROQ_MODEL = "llama-3.1-8b-instant"
 MAX_USER_TOKENS = 1_500
 CHARS_PER_TOKEN_ESTIMATE = 4
 
-EXTRACT_SYSTEM_PROMPT = """You are an expert academic syllabus parser. Given the raw text of a course syllabus, extract ALL important dates and deadlines.
+def _extract_system_prompt() -> str:
+    from datetime import date as _date
+
+    today = _date.today()
+    current_year = today.year
+    # Academic year: Fall uses current year, Spring uses next year
+    next_year = current_year + 1
+
+    return f"""You are an expert academic syllabus parser. Given the raw text of a course syllabus, extract ALL important dates and deadlines.
+
+IMPORTANT — Today's date is {today.isoformat()}.
+When the syllabus does NOT explicitly state a year, use these rules:
+- Fall semester dates (August–December) → use {current_year}
+- Spring semester dates (January–May) → use {next_year}
+- Summer semester dates (June–July) → use {next_year}
+If the syllabus DOES state a year, use that year.
 
 For each event provide:
 - title: descriptive name (e.g., "Midterm Exam", "HW3 Due", "Final Project Proposal Due")
-- date: ISO 8601 date string (YYYY-MM-DD). Infer the year from the semester/term context.
+- date: ISO 8601 date string (YYYY-MM-DD)
 - time: start time if mentioned (HH:MM in 24h format), or null
 - duration_minutes: estimated duration (120 for exams, 60 for quizzes, 30 for assignment submissions)
 - event_type: one of "exam", "assignment", "quiz", "reading", "lecture", "lab", "project", "other"
@@ -36,12 +51,12 @@ For each event provide:
 Be thorough. Include assignment due dates, exam dates, project milestones, quiz dates, reading deadlines, and any other scheduled academic items. Resolve relative dates like "Week 5" using the semester start date.
 
 You MUST respond with valid JSON matching this exact schema:
-{
+{{
   "course_name": "string",
   "semester": "string",
   "instructor": "string or null",
   "events": [
-    {
+    {{
       "title": "string",
       "date": "YYYY-MM-DD",
       "time": "HH:MM or null",
@@ -49,9 +64,9 @@ You MUST respond with valid JSON matching this exact schema:
       "event_type": "exam|assignment|quiz|reading|lecture|lab|project|other",
       "description": "string",
       "weight": "string or null"
-    }
+    }}
   ]
-}"""
+}}"""
 
 STUDY_PLAN_SYSTEM_PROMPT = """You are an expert academic study planner and time management coach. Given a list of syllabus events (assignments, exams, projects), generate an optimal study plan.
 
@@ -158,8 +173,14 @@ def _sanitize_events(events: list[dict]) -> list[dict]:
             continue
         if not ev.get("title") or not ev.get("date"):
             continue
-        if ev.get("duration_minutes") is None:
+        dm = ev.get("duration_minutes")
+        if dm is None or dm == "null" or dm == "":
             ev.pop("duration_minutes", None)
+        elif isinstance(dm, str):
+            try:
+                ev["duration_minutes"] = int(dm)
+            except ValueError:
+                ev.pop("duration_minutes", None)
         cleaned.append(ev)
     return cleaned
 
@@ -171,7 +192,7 @@ def _extract_events_single(
     response = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": EXTRACT_SYSTEM_PROMPT},
+            {"role": "system", "content": _extract_system_prompt()},
             {"role": "user", "content": text},
         ],
         response_format={"type": "json_object"},

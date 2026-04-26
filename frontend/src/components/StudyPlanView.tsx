@@ -44,6 +44,7 @@ interface StudyPlanViewProps {
 
 function getDaysSince(dateStr: string): number {
   const then = new Date(dateStr);
+  if (isNaN(then.getTime())) return 0;
   const now = new Date();
   return Math.floor((now.getTime() - then.getTime()) / (1000 * 60 * 60 * 24));
 }
@@ -79,6 +80,7 @@ function EventBadge({ type }: { type: string }) {
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 

@@ -58,6 +58,10 @@ async def save_resources(req: SaveResourcesRequest):
     for topic in payload.get("topic_resources", []):
         topic["resources"] = _dedupe_resources(topic.get("resources", []))
 
+    # Remove fields that are part of the filter / $setOnInsert to avoid
+    # MongoDB "conflicting update" errors.
+    payload.pop("course_name", None)
+
     await db.resources.update_one(
         {"uid": req.uid, "course_name": req.course_name},
         {

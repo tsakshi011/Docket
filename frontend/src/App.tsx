@@ -200,7 +200,15 @@ export default function App() {
           <div className="max-w-4xl mx-auto px-4 py-10 w-full">
             {error && (
               <div className="max-w-xl mx-auto mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-                {error}
+                {error.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                  part.match(/^https?:\/\//) ? (
+                    <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="underline font-medium text-red-800 hover:text-red-900">
+                      {part}
+                    </a>
+                  ) : (
+                    <span key={i}>{part}</span>
+                  ),
+                )}
               </div>
             )}
 

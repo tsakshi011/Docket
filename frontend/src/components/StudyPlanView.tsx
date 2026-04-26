@@ -100,8 +100,12 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
     ...data.study_blocks.map((b) => ({ ...b, kind: 'block' as const, event_type: b.block_type })),
   ].sort((a, b) => a.date.localeCompare(b.date));
 
-  const allTaskCount = allItems.length + tasks.length;
-  const allCompletedCount = completedItems.size + tasks.filter((t) => t.completed).length;
+  const EXCLUDED_TASK_TYPES = new Set(['lecture']);
+  const taskItems = allItems.filter((item) => !EXCLUDED_TASK_TYPES.has(item.event_type));
+
+  const allTaskCount = taskItems.length + tasks.length;
+  const completedTaskItems = taskItems.filter((item) => completedItems.has(`${item.date}-${item.title}`)).length;
+  const allCompletedCount = completedTaskItems + tasks.filter((t) => t.completed).length;
 
   const toggleTimelineItem = (key: string) => {
     setCompletedItems((prev) => {
@@ -441,7 +445,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
 
           {/* Syllabus items as tasks */}
           <ul className="space-y-2">
-            {allItems.map((item) => {
+            {taskItems.map((item) => {
               const itemKey = `${item.date}-${item.title}`;
               const isChecked = completedItems.has(itemKey);
               const isEvent = item.kind === 'event';

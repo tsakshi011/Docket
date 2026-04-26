@@ -186,8 +186,19 @@ def _execute_action(action: str, action_input: dict) -> str:
         return json.dumps({"error": str(exc)})
 
 
+def _is_daily_limit(exc: RateLimitError) -> bool:
+    """Return True if the error is a daily token quota (TPD) exhaustion."""
+    msg = str(exc).lower()
+    return "tokens per day" in msg or "(tpd)" in msg
+
+
 def _llm_call_with_retry(client: OpenAI, model: str, messages: list[dict]):
-    """Call the Groq chat API with exponential backoff on 429 errors."""
+    """Call the Groq chat API with exponential backoff on 429 errors.
+
+    If the error is a daily token limit (TPD), returns ``None`` immediately
+    so the caller can switch to the fallback model without wasting time.
+    Only retries on per-minute / per-second rate limits.
+    """
     for attempt in range(_MAX_RETRIES):
         try:
             return client.chat.completions.create(
@@ -197,6 +208,12 @@ def _llm_call_with_retry(client: OpenAI, model: str, messages: list[dict]):
                 temperature=0.3,
             )
         except RateLimitError as exc:
+            if _is_daily_limit(exc):
+                logger.warning(
+                    "Daily token limit (TPD) hit on %s — skipping retries",
+                    model,
+                )
+                return None
             wait = _BASE_DELAY * (2 ** attempt)
             logger.warning(
                 "Rate-limited (attempt %d/%d) on %s — waiting %ds: %s",
@@ -312,7 +329,11 @@ def recommend_resources(
         subject_domain="unknown",
         general_resources=[],
         topic_resources=[],
-        study_tips=["Upload your syllabus and try again for personalized recommendations."],
+        study_tips=[
+            "The AI resource search hit a rate limit. "
+            "Your daily Groq token quota may be exhausted — "
+            "try again in a few hours or upgrade at https://console.groq.com/settings/billing",
+        ],
     )
 
 

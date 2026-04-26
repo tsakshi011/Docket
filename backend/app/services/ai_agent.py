@@ -253,7 +253,7 @@ def _extract_events_with_model(
 
     for i, chunk in enumerate(chunks):
         if i > 0:
-            time.sleep(15)
+            time.sleep(3)
         raw = _extract_events_single(client, chunk, model=model)
         if not course_name:
             course_name = raw.get("course_name", "")
@@ -406,7 +406,7 @@ def run_agent_pipeline(syllabus_text: str) -> StudyPlan:
     parsed = extract_events(syllabus_text)
 
     # Pause between pipeline steps for Groq's TPM rate limit.
-    time.sleep(15)
+    time.sleep(3)
 
     # Step 2: Generate autonomous study plan
     plan = generate_study_plan(parsed)
@@ -415,7 +415,7 @@ def run_agent_pipeline(syllabus_text: str) -> StudyPlan:
     plan.syllabus_events = parsed.events
 
     # Step 3: Agentic resource routing
-    time.sleep(5)
+    time.sleep(2)
     try:
         plan.resources = recommend_resources(parsed, plan)
         logger.info(

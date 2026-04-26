@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import type { ParseResponse, StudyBlock, OutlineSection } from '../types';
 import starImg from '../assets/star.png';
-import { generateGcalLink, recommendResources } from '../api';
+import { generateGcalLink, recommendResources, saveResources, fetchResources } from '../api';
 import ResourcePanel from './ResourcePanel';
 
 interface TaskProgressData {
@@ -41,6 +41,7 @@ interface StudyPlanViewProps {
   onTaskProgressChange?: (courseName: string, completedItems: string[], customTasks: TaskItem[]) => void;
   coldCallDate?: string;
   onColdCall?: (courseName: string) => void;
+  uid?: string;
 }
 
 function getDaysSince(dateStr: string): number {
@@ -91,7 +92,7 @@ interface TaskItem {
   completed: boolean;
 }
 
-export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset, savedCourses, onSwitchCourse, onDeleteCourse, initialTaskProgress, onTaskProgressChange, coldCallDate, onColdCall }: StudyPlanViewProps) {
+export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset, savedCourses, onSwitchCourse, onDeleteCourse, initialTaskProgress, onTaskProgressChange, coldCallDate, onColdCall, uid }: StudyPlanViewProps) {
   const [showStudyBlocks, setShowStudyBlocks] = useState(true);
   const [activeTab, setActiveTab] = useState<
     'timeline' | 'events' | 'blocks' | 'tasks' | 'outline' | 'resources'
@@ -113,10 +114,35 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
     initialized.current = true;
   }, [data.course_name]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sync resources when data changes (course switch or fresh parse)
+  // Sync resources when data changes (course switch or fresh parse).
+  // If the user is signed in, try loading cached resources from the DB first.
   useEffect(() => {
-    setLocalResources(data.resources ?? null);
-  }, [data.course_name, data.resources]);
+    let cancelled = false;
+    if (uid) {
+      fetchResources(uid, data.course_name)
+        .then((cached) => {
+          if (cancelled) return;
+          if (cached) {
+            setLocalResources(cached);
+          } else {
+            setLocalResources(data.resources ?? null);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setLocalResources(data.resources ?? null);
+        });
+    } else {
+      setLocalResources(data.resources ?? null);
+    }
+    return () => { cancelled = true; };
+  }, [data.course_name, data.resources, uid]);
+
+  // Persist resources to DB whenever localResources changes
+  useEffect(() => {
+    if (uid && localResources) {
+      saveResources(uid, data.course_name, localResources).catch(() => {});
+    }
+  }, [uid, data.course_name, localResources]);
 
   const handleRefreshResources = async () => {
     setResourceRefreshing(true);

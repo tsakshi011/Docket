@@ -360,6 +360,7 @@ export default function App() {
                 onTaskProgressChange={handleTaskProgressChange}
                 coldCallDate={(() => { const safeKey = data.course_name.replace(/\./g, '_').replace(/\$/g, '_'); return coldCalls[safeKey]; })()}
                 onColdCall={handleColdCall}
+                uid={user?.uid}
               />
               </ErrorBoundary>
             )}

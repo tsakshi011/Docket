@@ -123,3 +123,54 @@ export async function recordColdCall(uid: string, courseName: string): Promise<s
   });
   return response.data.date;
 }
+
+// --- Resource persistence (MongoDB) ---
+
+export async function saveResources(
+  uid: string,
+  courseName: string,
+  resources: ResourceRecommendations,
+): Promise<void> {
+  await axios.put(`${API_BASE}/resources/store`, {
+    uid,
+    course_name: courseName,
+    resources,
+  });
+}
+
+export async function fetchResources(
+  uid: string,
+  courseName: string,
+): Promise<ResourceRecommendations | null> {
+  const response = await axios.get<ResourceRecommendations | null>(
+    `${API_BASE}/resources/store/${uid}/${encodeURIComponent(courseName)}`,
+  );
+  return response.data;
+}
+
+export async function fetchAllResources(
+  uid: string,
+): Promise<Record<string, ResourceRecommendations>> {
+  const response = await axios.get<{ resources: Record<string, ResourceRecommendations> }>(
+    `${API_BASE}/resources/store/${uid}`,
+  );
+  return response.data.resources;
+}
+
+export async function deleteStoredResources(
+  uid: string,
+  courseName: string,
+  resourceUrl?: string,
+  resourceTitle?: string,
+  topic?: string,
+): Promise<void> {
+  await axios.delete(`${API_BASE}/resources/store`, {
+    data: {
+      uid,
+      course_name: courseName,
+      resource_url: resourceUrl ?? null,
+      resource_title: resourceTitle ?? null,
+      topic: topic ?? null,
+    },
+  });
+}

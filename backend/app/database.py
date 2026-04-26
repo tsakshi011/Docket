@@ -26,6 +26,18 @@ async def connect_db():
     client = AsyncIOMotorClient(MONGODB_URI)
     db = client.docket
     logger.info("Connected to MongoDB")
+    await _ensure_indexes()
+
+
+async def _ensure_indexes():
+    """Create indexes for collections that need them."""
+    if db is None:
+        return
+    await db.resources.create_index(
+        [("uid", 1), ("course_name", 1)],
+        unique=True,
+        name="uid_course_unique",
+    )
 
 
 async def close_db():

@@ -149,6 +149,24 @@ class ResourceRequest(BaseModel):
     events: list[SyllabusEvent]
 
 
+# ---------------------------------------------------------------------------
+# Resource persistence (MongoDB)
+# ---------------------------------------------------------------------------
+
+class SaveResourcesRequest(BaseModel):
+    uid: str
+    course_name: str
+    resources: ResourceRecommendations
+
+
+class DeleteResourceRequest(BaseModel):
+    uid: str
+    course_name: str
+    resource_url: str | None = None
+    resource_title: str | None = None
+    topic: str | None = None
+
+
 # Rebuild forward refs so StudyPlan / ParseResponse can reference ResourceRecommendations
 StudyPlan.model_rebuild()
 ParseResponse.model_rebuild()

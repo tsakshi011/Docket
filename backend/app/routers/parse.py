@@ -34,20 +34,19 @@ async def parse_syllabus(
     # Step 2+3: Run agentic pipeline (extract events → generate study plan)
     try:
         plan = run_agent_pipeline(syllabus_text)
+        return ParseResponse(
+            course_name=plan.course_name,
+            semester=plan.semester,
+            syllabus_events=plan.syllabus_events,
+            study_blocks=plan.study_blocks,
+            weekly_summary=plan.weekly_summary,
+            warnings=plan.warnings,
+            course_outline=[],
+            raw_text_preview=syllabus_text[:500],
+            resources=plan.resources,
+        )
     except Exception as e:
         raise HTTPException(500, f"AI processing failed: {str(e)}")
-
-    return ParseResponse(
-        course_name=plan.course_name,
-        semester=plan.semester,
-        syllabus_events=plan.syllabus_events,
-        study_blocks=plan.study_blocks,
-        weekly_summary=plan.weekly_summary,
-        warnings=plan.warnings,
-        course_outline=plan.course_outline,
-        raw_text_preview=syllabus_text[:500],
-        resources=plan.resources,
-    )
 
 
 @router.post("/export/ics")

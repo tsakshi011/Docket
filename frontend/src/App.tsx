@@ -253,6 +253,32 @@ export default function App() {
       ],
       weekly_summary: ['Week 3: HW1 due', 'Week 4: Quiz 1', 'Week 7: MIDTERM', 'Week 14: Final project due', 'Week 15: FINAL EXAM'],
       warnings: ['Heavy week: Midterm Oct 20 — start reviewing by Oct 14', 'Final project Dec 8 and Final Exam Dec 15 — only 1 week gap'],
+      course_outline: [
+        {
+          topic: 'Functional Programming',
+          subtopics: [
+            { name: 'Pure Functions & Immutability', rules: ['A pure function always returns the same output for the same input', 'No side effects allowed in pure functional code'], cases: [], notes: 'Core concept tested on midterm and final' },
+            { name: 'Higher-Order Functions', rules: ['Functions can accept and return other functions', 'map, filter, reduce are fundamental HOFs'], cases: [], notes: 'Practice implementing these in OCaml for HW1' },
+          ],
+          key_concepts: ['Referential transparency', 'First-class functions', 'Closures and lexical scoping'],
+        },
+        {
+          topic: 'Lambda Calculus',
+          subtopics: [
+            { name: 'Syntax & Reduction', rules: ['Beta reduction: substitute argument into function body', 'Alpha conversion: rename bound variables to avoid capture'], cases: [], notes: 'Quiz 1 focuses heavily on reduction steps' },
+            { name: 'Church Encodings', rules: ['Booleans, numbers, and pairs can be encoded as lambda terms'], cases: [], notes: 'Understand Church numerals for the exam' },
+          ],
+          key_concepts: ['Turing completeness of lambda calculus', 'Normal form and termination'],
+        },
+        {
+          topic: 'Type Systems',
+          subtopics: [
+            { name: 'Static vs Dynamic Typing', rules: ['Static typing catches errors at compile time', 'Dynamic typing defers type checks to runtime'], cases: [], notes: 'Compare tradeoffs for exam essays' },
+            { name: 'Type Inference', rules: ['Hindley-Milner algorithm infers most general types', 'Unification resolves type constraints'], cases: [], notes: 'HW2 covers implementation of basic type inference' },
+          ],
+          key_concepts: ['Type safety', 'Parametric polymorphism', 'Type soundness'],
+        },
+      ],
       raw_text_preview: 'CS 131 - Programming Languages, Fall 2026...',
     };
     setData(demoData);

@@ -60,6 +60,19 @@ class StudyBlock(BaseModel):
         return _validate_time(v)
 
 
+class OutlineSubtopic(BaseModel):
+    name: str
+    rules: list[str] = []
+    cases: list[str] = []
+    notes: str = ""
+
+
+class OutlineSection(BaseModel):
+    topic: str
+    subtopics: list[OutlineSubtopic] = []
+    key_concepts: list[str] = []
+
+
 class ParsedSyllabus(BaseModel):
     course_name: str
     semester: str
@@ -74,6 +87,7 @@ class StudyPlan(BaseModel):
     study_blocks: list[StudyBlock] = []
     weekly_summary: list[str] = [] # high-level per-week summary
     warnings: list[str] = [] # e.g., "Heavy week: 3 deadlines on Nov 10-14"
+    course_outline: list[OutlineSection] = []
 
 
 class ParseRequest(BaseModel):
@@ -88,6 +102,7 @@ class ParseResponse(BaseModel):
     study_blocks: list[StudyBlock]
     weekly_summary: list[str]
     warnings: list[str]
+    course_outline: list[OutlineSection] = []
     raw_text_preview: str
 
 

@@ -5,7 +5,7 @@ import time
 
 from openai import APIStatusError, OpenAI, RateLimitError
 
-from app.models.schemas import ParsedSyllabus, StudyPlan
+from app.models.schemas import OutlineSection, ParsedSyllabus, StudyPlan
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -101,6 +101,37 @@ You MUST respond with valid JSON matching this exact schema:
   ],
   "weekly_summary": ["string (one-line summary per week)"],
   "warnings": ["string (alerts about heavy weeks, conflicts)"]
+}"""
+
+
+OUTLINE_SYSTEM_PROMPT = """You are an expert law school study coach. Given a course syllabus with its topics and events, generate a structured course outline — the kind law students build throughout the semester to prepare for exams.
+
+A law school outline organizes the course material into a hierarchical structure:
+- **Topics**: Major subject areas covered in the course (e.g., "Contract Formation", "Negligence", "Constitutional Powers")
+- **Subtopics**: Specific doctrines, rules, or concepts within each topic (e.g., "Offer & Acceptance", "Duty of Care")
+  - **Rules**: Black-letter law statements for each subtopic (e.g., "An offer must be definite and communicated to the offeree")
+  - **Cases**: Key cases that illustrate the rule (e.g., "Hadley v. Baxendale (1854)")
+  - **Notes**: Brief study notes, mnemonics, or exam tips
+- **Key Concepts**: High-level takeaways for the topic
+
+If this is NOT a law course, still generate a structured outline with topics, subtopics, key concepts, and notes — just skip the cases and rules fields.
+
+You MUST respond with valid JSON matching this exact schema:
+{
+  "course_outline": [
+    {
+      "topic": "string (e.g., 'Contract Formation')",
+      "subtopics": [
+        {
+          "name": "string (e.g., 'Offer & Acceptance')",
+          "rules": ["string (black-letter law statement)"],
+          "cases": ["string (case name and year)"],
+          "notes": "string (brief study notes)"
+        }
+      ],
+      "key_concepts": ["string (high-level takeaway)"]
+    }
+  ]
 }"""
 
 
@@ -328,12 +359,51 @@ Generate an optimal study plan with preparation blocks for each event. Break dow
     return StudyPlan(**raw)
 
 
+def generate_course_outline(parsed: ParsedSyllabus, syllabus_text: str) -> list[OutlineSection]:
+    """Step 3: Generate a structured course outline from the syllabus."""
+    client = _get_client()
+
+    events_summary = "\n".join(
+        f"- {e.title} ({e.event_type}) — {e.date}"
+        + (f" — {e.description}" if e.description else "")
+        for e in parsed.events
+    )
+
+    # Use a trimmed version of the syllabus text for topic context
+    trimmed_text = syllabus_text[:MAX_USER_TOKENS * CHARS_PER_TOKEN_ESTIMATE]
+
+    user_prompt = f"""Course: {parsed.course_name}
+Semester: {parsed.semester}
+
+Syllabus text (trimmed):
+{trimmed_text}
+
+Syllabus events:
+{events_summary}
+
+Generate a comprehensive course outline organized by topic. If this is a law course, include rules, cases, and study notes for each subtopic."""
+
+    response = client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[
+            {"role": "system", "content": OUTLINE_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.2,
+    )
+
+    raw = json.loads(response.choices[0].message.content)
+    sections = raw.get("course_outline", [])
+    return [OutlineSection(**s) for s in sections if isinstance(s, dict)]
+
+
 def run_agent_pipeline(syllabus_text: str) -> StudyPlan:
-    """Full agentic pipeline: Extract → Reason → Plan."""
+    """Full agentic pipeline: Extract → Reason → Plan → Outline."""
     # Step 1: Extract events from syllabus
     parsed = extract_events(syllabus_text)
 
-    # Pause between pipeline steps Groq's TPM rate limit.
+    # Pause between pipeline steps for Groq's TPM rate limit.
     time.sleep(15)
 
     # Step 2: Generate autonomous study plan
@@ -341,5 +411,15 @@ def run_agent_pipeline(syllabus_text: str) -> StudyPlan:
 
     # Ensure the original syllabus events are included
     plan.syllabus_events = parsed.events
+
+    # Pause before outline generation
+    time.sleep(15)
+
+    # Step 3: Generate course outline
+    try:
+        plan.course_outline = generate_course_outline(parsed, syllabus_text)
+    except Exception as e:
+        logger.warning("Outline generation failed: %s", e)
+        plan.course_outline = []
 
     return plan

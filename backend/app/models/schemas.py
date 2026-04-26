@@ -1,5 +1,22 @@
-from pydantic import BaseModel
+import re
+
+from pydantic import BaseModel, field_validator
 from typing import Optional
+
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_TIME_RE = re.compile(r"^\d{2}:\d{2}$")
+
+
+def _validate_date(v: str) -> str:
+    if not _DATE_RE.match(v):
+        return "2099-01-01"
+    return v
+
+
+def _validate_time(v: str | None) -> str | None:
+    if v is not None and not _TIME_RE.match(v):
+        return None
+    return v
 
 
 class SyllabusEvent(BaseModel):
@@ -11,6 +28,16 @@ class SyllabusEvent(BaseModel):
     description: Optional[str] = ""
     weight: Optional[str] = None  # e.g., "20% of final grade"
 
+    @field_validator("date")
+    @classmethod
+    def check_date(cls, v: str) -> str:
+        return _validate_date(v)
+
+    @field_validator("time")
+    @classmethod
+    def check_time(cls, v: str | None) -> str | None:
+        return _validate_time(v)
+
 
 class StudyBlock(BaseModel):
     title: str
@@ -21,6 +48,16 @@ class StudyBlock(BaseModel):
     related_event: str  # title of the parent assignment/exam this supports
     description: Optional[str] = ""
     priority: str = "medium"  # low, medium, high, critical
+
+    @field_validator("date")
+    @classmethod
+    def check_date(cls, v: str) -> str:
+        return _validate_date(v)
+
+    @field_validator("time")
+    @classmethod
+    def check_time(cls, v: str | None) -> str | None:
+        return _validate_time(v)
 
 
 class ParsedSyllabus(BaseModel):

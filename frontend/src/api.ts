@@ -37,6 +37,7 @@ export function generateGcalLink(
 ): string {
   const startDt = time ? `${date}T${time}:00` : `${date}T09:00:00`;
   const start = new Date(startDt);
+  if (isNaN(start.getTime())) return '#';
   const end = new Date(start.getTime() + durationMinutes * 60000);
 
   const fmt = (d: Date) =>

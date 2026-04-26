@@ -13,7 +13,7 @@ Users ask for study resources in natural language (e.g., "Find resources for Org
 ## Architecture
 
 ```
-ASI:One Chat  ──>  Agentverse (mailbox)  ──>  This Agent
+ASI:One Chat  ──>  Agentverse (hosted)  ──>  Docket Agent
                                                   │
                                           ┌───────┴────────┐
                                           │  Chat Protocol  │
@@ -36,70 +36,53 @@ ASI:One Chat  ──>  Agentverse (mailbox)  ──>  This Agent
 
 ## Prerequisites
 
-- Python 3.11+
 - [Groq API key](https://console.groq.com/keys) (free tier works)
 - [Tavily API key](https://tavily.com) (free tier: 1,000 searches/month)
 - [Agentverse account](https://agentverse.ai) (free)
 
-## Setup
+## Setup (Hosted Agent — Recommended)
 
-### 1. Install dependencies
+This is the easiest approach: the agent runs on Agentverse's infrastructure — no local setup needed.
 
-```bash
-cd backend
-pip install -e .
-pip install uagents
-```
+### 1. Create a Hosted Agent on Agentverse
 
-### 2. Set environment variables
+1. Go to [agentverse.ai](https://agentverse.ai) → **My Agents** → **+ Launch an Agent**
+2. Select **Create an Agent** → **Blank** template
+3. Name it `Docket Study Resources`
+4. Assign keywords: `study`, `resources`, `education`
+5. Click **Launch Agent**
 
-```bash
-export GROQ_API_KEY="gsk_..."
-export TAVILY_API_KEY="tvly-..."
-export AGENT_SEED="your-unique-secret-seed-phrase"   # generates your agent address
-export AGENT_PORT=8001                                # optional, default 8001
-```
+### 2. Paste the agent code
 
-> **Important:** The `AGENT_SEED` determines your agent's address. Use a unique, memorable phrase and keep it consistent — changing it creates a new agent identity.
+1. Go to the **Build** tab in the Agent Editor
+2. Copy the entire contents of [`agent_hosted.py`](./agent_hosted.py) and paste it into the editor
+3. Click **Save** and then **Start** the agent
 
-### 3. Run the agent
+### 3. Add API key secrets
 
-```bash
-python fetch_agent/agent.py
-```
+1. Go to the agent's **Secrets** tab (or Settings → Secrets)
+2. Add two secrets:
+   - `GROQ_API_KEY` → your Groq API key (get one at https://console.groq.com/keys)
+   - `TAVILY_API_KEY` → your Tavily API key (get one at https://tavily.com)
 
-You should see output like:
+### 4. Set up your Agent Profile for discoverability
 
-```
-INFO:     [docket-study-resources]: Starting agent with address: agent1q...
-INFO:     [docket-study-resources]: Agent inspector available at https://agentverse.ai/inspect/?uri=http%3A//127.0.0.1%3A8001&address=agent1q...
-INFO:     [docket-study-resources]: Starting server on http://0.0.0.0:8001
-INFO:     [docket-study-resources]: Starting mailbox client for https://agentverse.ai
-```
-
-### 4. Connect to Agentverse (mailbox)
-
-1. Click the **Agent inspector** link from the terminal output
-2. Click **Connect** and select **Mailbox**
-3. Your agent is now registered on the Almanac and can receive messages from ASI:One
-
-### 5. Set up your Agent Profile
-
-1. In the Inspector, click **Agent Profile**
-2. Set a descriptive name: e.g., `Docket Study Resources`
-3. Set a handle: e.g., `@docket-study-resources`
-4. Write a description:
+1. Go to the agent's **Dashboard** or **Profile** section
+2. Set a descriptive **name**: `Docket Study Resources`
+3. Set a **handle**: e.g., `@docket-study-resources`
+4. Write a **description**:
    > I find the best free study resources for any university course. Tell me a course name (e.g., "Organic Chemistry", "CS 161 Data Structures", "Civil Procedure") and I'll search YouTube, MIT OCW, Coursera, Khan Academy, and more to curate personalized study materials organized by topic.
-5. Click **Save**
+5. Add a **README** following [Agentverse README Guidelines](https://docs.agentverse.ai/documentation/agent-discovery/readme-guidelines)
+6. Click **Save**
 
-### 6. Test via ASI:One Chat
+### 5. Test via ASI:One Chat
 
 1. In the Agent Profile page, click **Chat with Agent**
-2. Or go to [asi1.ai](https://asi1.ai) and search for your agent
-3. Type a course name, e.g.: "Find study resources for Linear Algebra"
-4. The agent will search and return curated resources
+2. Or go to [asi1.ai](https://asi1.ai) and search for your agent by name
+3. Type a course name, e.g.: `Find study resources for Linear Algebra`
+4. The agent will search the web and return curated resources
 
-### 7. Get your deliverable URLs
+### 6. Get your deliverable URLs
 
 After testing, collect these for your hackathon submission:
 
@@ -108,6 +91,25 @@ After testing, collect these for your hackathon submission:
 - **Agentverse agent URL**: Found in your Agent Profile page:
   `https://agentverse.ai/agents/details/<your-agent-address>/profile`
 - **GitHub repo URL**: `https://github.com/tsakshi011/Docket`
+
+## Alternative: Local Agent (Advanced)
+
+If you prefer to run the agent locally and connect via mailbox, use `agent.py` instead:
+
+```bash
+cd backend && pip install -e . && pip install uagents
+export GROQ_API_KEY="gsk_..."
+export TAVILY_API_KEY="tvly-..."
+export AGENT_SEED="your-unique-secret-seed-phrase"
+python fetch_agent/agent.py
+```
+
+Then connect the mailbox via the Agent Inspector link in the terminal output.
+
+> **Note:** Local agents require you to fix macOS SSL certificates first:
+> ```bash
+> export SSL_CERT_FILE=$(python3 -c "import certifi; print(certifi.where())")
+> ```
 
 ## How it works
 
@@ -136,14 +138,21 @@ The agent uses a ReAct (Reasoning + Acting) loop:
 - Uses `llama-3.1-8b-instant` (cheap, fast)
 - Sliding context window keeps only last 3 tool results
 - 3 search results per query, truncated to 1500 chars
-- Total: ~6K tokens per query (~16 queries/day on free tier)
+- Total: ~6K tokens per query (~16 queries/day on Groq free tier)
+
+## Files
+
+| File | Description |
+|------|-------------|
+| `agent_hosted.py` | **Self-contained hosted agent** — paste into Agentverse Editor. Uses `requests` for Tavily API (no external dependencies). |
+| `agent.py` | Local agent version — imports from Docket backend, connects via mailbox. |
+| `README.md` | This file. |
 
 ## Troubleshooting
 
 | Issue | Fix |
 |-------|-----|
-| `GROQ_API_KEY is not set` | Export the env var before running |
-| `TAVILY_API_KEY is not set` | Export the env var before running |
-| Rate limit errors (429) | Wait a few minutes, or reduce `MAX_TURNS` |
-| Agent not appearing on ASI:One | Make sure the mailbox connection is active and agent is running |
+| Agent not responding | Check that both API key secrets are set in the Secrets tab |
+| Rate limit errors (429) | Wait a few minutes; the agent uses the 8B model to stay within free-tier limits |
+| Agent not appearing on ASI:One | Make sure the agent is running (green status) and profile is filled out |
 | No search results | Check that Tavily API key is valid and has remaining quota |

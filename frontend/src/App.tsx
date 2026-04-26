@@ -358,9 +358,9 @@ export default function App() {
               paintOrder: 'stroke fill',
             }}
           >
-            <span>Pomo</span>
-            <img src="/src/assets/docket-logo-d.png" alt="d" className="h-[4.5rem] -mr-7" style={{ marginTop: '2px', marginLeft: '-1.5rem' }} />
-            <span>oro</span>
+            <span style={{ letterSpacing: '-0.05em' }}>Pomo</span>
+            <img src="/src/assets/docket-logo-d.png" alt="d" className="h-[4.5rem] -mr-6" style={{ marginTop: '2px', marginLeft: '-1rem' }} />
+            <span style={{ letterSpacing: '-0.05em' }}>oro</span>
           </h2>
           <PomodoroTimer />
         </div>

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import httpx
 
 from app.models.schemas import SyllabusEvent, StudyBlock
@@ -27,43 +29,34 @@ def _headers(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
 
-def _build_datetime(date: str, time: str | None) -> str:
+def _start_end(date: str, time: str | None, duration_minutes: int) -> tuple[str, str]:
     t = time if time else "09:00"
-    return f"{date}T{t}:00"
+    start_dt = datetime.fromisoformat(f"{date}T{t}:00")
+    end_dt = start_dt + timedelta(minutes=duration_minutes)
+    fmt = "%Y-%m-%dT%H:%M:%S"
+    return start_dt.strftime(fmt), end_dt.strftime(fmt)
 
 
 def syllabus_event_to_gcal(ev: SyllabusEvent) -> dict:
-    start = _build_datetime(ev.date, ev.time)
+    start, end = _start_end(ev.date, ev.time, ev.duration_minutes)
     return {
         "summary": f"\U0001f4cc {ev.title}",
         "description": (ev.description or f"Type: {ev.event_type}")
         + (f"\nWeight: {ev.weight}" if ev.weight else ""),
         "start": {"dateTime": start, "timeZone": "America/Los_Angeles"},
-        "end": {
-            "dateTime": _build_datetime(ev.date, ev.time).replace(
-                ev.time or "09:00",
-                f"{int((ev.time or '09:00').split(':')[0]) + ev.duration_minutes // 60:02d}:{int((ev.time or '09:00').split(':')[1]) + ev.duration_minutes % 60:02d}",
-            ),
-            "timeZone": "America/Los_Angeles",
-        },
+        "end": {"dateTime": end, "timeZone": "America/Los_Angeles"},
         "colorId": EVENT_TYPE_COLORS.get(ev.event_type, "8"),
     }
 
 
 def study_block_to_gcal(block: StudyBlock) -> dict:
-    start = _build_datetime(block.date, block.time)
+    start, end = _start_end(block.date, block.time, block.duration_minutes)
     return {
         "summary": f"\U0001f4da {block.title}",
         "description": (block.description or "")
         + f"\nFor: {block.related_event}\nPriority: {block.priority}",
         "start": {"dateTime": start, "timeZone": "America/Los_Angeles"},
-        "end": {
-            "dateTime": _build_datetime(block.date, block.time).replace(
-                block.time or "09:00",
-                f"{int((block.time or '09:00').split(':')[0]) + block.duration_minutes // 60:02d}:{int((block.time or '09:00').split(':')[1]) + block.duration_minutes % 60:02d}",
-            ),
-            "timeZone": "America/Los_Angeles",
-        },
+        "end": {"dateTime": end, "timeZone": "America/Los_Angeles"},
         "colorId": PRIORITY_COLORS.get(block.priority, "9"),
     }
 

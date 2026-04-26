@@ -5,6 +5,7 @@ import HeroSection from './components/HeroSection';
 import FileUpload from './components/FileUpload';
 import StudyPlanView from './components/StudyPlanView';
 import ScheduleView from './components/ScheduleView';
+import PomodoroTimer from './components/PomodoroTimer';
 import { parseSyllabus, exportIcs, exportToGoogleCalendar, fetchUserCourses, saveUserCourse, deleteUserCourse, saveUserTaskProgress, recordColdCall } from './api';
 import type { UserDataResponse } from './api';
 import { useAuth } from './useAuth';
@@ -35,7 +36,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-type Page = 'home' | 'upload' | 'schedule';
+type Page = 'home' | 'upload' | 'schedule' | 'pomodoro';
 
 interface SavedCourse {
   name: string;
@@ -268,6 +269,8 @@ export default function App() {
       setPage('upload');
     } else if (target === 'schedule') {
       setPage('schedule');
+    } else if (target === 'pomodoro') {
+      setPage('pomodoro');
     }
   };
 
@@ -341,6 +344,26 @@ export default function App() {
       {/* Schedule Page */}
       {page === 'schedule' && (
         <ScheduleView data={data} onNavigate={handleNavigate} onLoadDemo={handleLoadDemo} savedCourses={savedCourses.map((c) => c.name)} onSwitchCourse={switchCourse} />
+      )}
+
+      {/* Pomodoro Page */}
+      {page === 'pomodoro' && (
+        <div className="flex flex-col items-center pt-16 gap-4 px-4">
+          <img src="/src/assets/star.png" alt="star" className="w-16 h-16" />
+          <h2
+            className="flex items-center text-5xl font-bold text-[#485C11]"
+            style={{
+              fontFamily: '"Nimbus Roman No9 L", "Times New Roman", Georgia, serif',
+              WebkitTextStroke: '2.5px #FFFBF1',
+              paintOrder: 'stroke fill',
+            }}
+          >
+            <span style={{ letterSpacing: '-0.05em' }}>Pomo</span>
+            <img src="/src/assets/docket-logo-d.png" alt="d" className="h-[4.5rem] -mr-6" style={{ marginTop: '2px', marginLeft: '-1rem' }} />
+            <span style={{ letterSpacing: '-0.05em' }}>oro</span>
+          </h2>
+          <PomodoroTimer />
+        </div>
       )}
     </div>
   );

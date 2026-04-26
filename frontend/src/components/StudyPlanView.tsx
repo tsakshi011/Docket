@@ -96,8 +96,8 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
   };
 
   const allItems = [
-    ...data.syllabus_events.map((e) => ({ ...e, kind: 'event' as const })),
-    ...data.study_blocks.map((b) => ({ ...b, kind: 'block' as const, event_type: b.block_type })),
+    ...(data.syllabus_events ?? []).map((e) => ({ ...e, kind: 'event' as const })),
+    ...(data.study_blocks ?? []).map((b) => ({ ...b, kind: 'block' as const, event_type: b.block_type })),
   ].sort((a, b) => a.date.localeCompare(b.date));
 
   const EXCLUDED_TASK_TYPES = new Set(['lecture']);
@@ -170,13 +170,13 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
       </div>
 
       {/* Warnings */}
-      {data.warnings.length > 0 && (
+      {(data.warnings ?? []).length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-1">
           <div className="flex items-center gap-2 font-medium text-amber-800">
             <AlertTriangle className="w-5 h-5" />
             Heads Up
           </div>
-          {data.warnings.map((w, i) => (
+          {(data.warnings ?? []).map((w, i) => (
             <p key={i} className="text-sm text-amber-700 ml-7">• {w}</p>
           ))}
         </div>
@@ -185,15 +185,15 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-[#FFFBF1] border border-[#485C11]/20 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-[#485C11]">{data.syllabus_events.length}</p>
+          <p className="text-2xl font-bold text-[#485C11]">{(data.syllabus_events ?? []).length}</p>
           <p className="text-xs text-[#485C11]/60">Syllabus Events</p>
         </div>
         <div className="bg-[#FFFBF1] border border-[#485C11]/20 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-[#485C11]">{data.study_blocks.length}</p>
+          <p className="text-2xl font-bold text-[#485C11]">{(data.study_blocks ?? []).length}</p>
           <p className="text-xs text-[#485C11]/60">Study Blocks Generated</p>
         </div>
         <div className="bg-[#FFFBF1] border border-[#485C11]/20 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-[#485C11]">{data.weekly_summary.length}</p>
+          <p className="text-2xl font-bold text-[#485C11]">{(data.weekly_summary ?? []).length}</p>
           <p className="text-xs text-[#485C11]/60">Weeks Planned</p>
         </div>
       </div>
@@ -252,7 +252,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            {tab === 'timeline' ? `Timeline${completedItems.size > 0 ? ` (${completedItems.size}/${allItems.length})` : ''}` : tab === 'events' ? `Events (${data.syllabus_events.length})` : tab === 'blocks' ? `Study Plan (${data.study_blocks.length})` : `Tasks (${allCompletedCount}/${allTaskCount})`}
+            {tab === 'timeline' ? `Timeline${completedItems.size > 0 ? ` (${completedItems.size}/${allItems.length})` : ''}` : tab === 'events' ? `Events (${(data.syllabus_events ?? []).length})` : tab === 'blocks' ? `Study Plan (${(data.study_blocks ?? []).length})` : `Tasks (${allCompletedCount}/${allTaskCount})`}
           </button>
         ))}
       </div>
@@ -334,7 +334,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
       {/* Events only */}
       {activeTab === 'events' && (
         <div className="space-y-2">
-          {data.syllabus_events.map((ev, i) => (
+          {(data.syllabus_events ?? []).map((ev, i) => (
             <div key={i} className="flex items-start gap-3 p-3 bg-[#FFFBF1] border border-[#485C11]/20 rounded-lg">
               <div className="text-xs text-gray-400 w-16 shrink-0 pt-0.5">
                 {formatDate(ev.date)}
@@ -367,7 +367,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
       {/* Study blocks only */}
       {activeTab === 'blocks' && (
         <div className="space-y-2">
-          {data.study_blocks.map((block, i) => (
+          {(data.study_blocks ?? []).map((block, i) => (
             <div
               key={i}
               className={`flex items-start gap-3 p-3 bg-[#FFFBF1] border border-[#485C11]/20 rounded-lg border-l-4 ${
@@ -537,7 +537,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
         </button>
         {showStudyBlocks && (
           <div className="space-y-1">
-            {data.weekly_summary.map((s, i) => (
+            {(data.weekly_summary ?? []).map((s, i) => (
               <div key={i} className="flex items-start gap-2 text-sm text-[#485C11]/70">
                 <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
                 {s}

@@ -22,7 +22,7 @@ import os
 import re
 import time
 
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 
 from app.models.schemas import (
     ParsedSyllabus,
@@ -36,7 +36,9 @@ logger = logging.getLogger(__name__)
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_MODEL = "llama-3.3-70b-versatile"
 GROQ_FALLBACK_MODEL = "llama-3.1-8b-instant"
-MAX_AGENT_TURNS = 8  # safety cap so we don't loop forever
+MAX_AGENT_TURNS = 6  # safety cap so we don't loop forever
+_BASE_DELAY = 8  # seconds between agent turns (Groq free tier: 30 req/min)
+_MAX_RETRIES = 3  # retries per LLM call on rate-limit errors
 
 RESOURCE_AGENT_SYSTEM_PROMPT = """\
 You are an expert academic resource curator agent. Your job is to find the
@@ -49,14 +51,15 @@ You have access to these tools:
 - search_practice(query): find practice problems on LeetCode, Brilliant, etc.
 
 STRATEGY:
-1. First, identify the subject domain and 3-5 key topics from the syllabus.
-2. For EACH key topic, use 1-2 tools to find relevant resources.
-   - For conceptual topics → search_youtube + search_academic
-   - For problem-solving topics → search_practice + search_web
-   - For writing/research → search_web + search_academic
-3. After searching, evaluate: do you have at least 2-3 good resources per
-   topic? If not, search again with a refined query.
-4. When you have enough, use action "finish" to output your final answer.
+1. First, identify the subject domain and 2-3 key topics from the syllabus.
+2. For EACH key topic, use ONE tool to find relevant resources.
+   - For conceptual topics → search_academic
+   - For problem-solving topics → search_practice
+   - For general/mixed → search_web
+3. Use ONE search_youtube call for the overall course (not per topic).
+4. Finish as soon as you have at least 1-2 resources per topic. Do NOT
+   over-search — prefer fewer, high-quality searches over many redundant ones.
+5. You have a BUDGET of 4-5 tool calls total. Be efficient.
 
 RESPONSE FORMAT — you MUST respond with a JSON object on every turn:
 
@@ -183,6 +186,30 @@ def _execute_action(action: str, action_input: dict) -> str:
         return json.dumps({"error": str(exc)})
 
 
+def _llm_call_with_retry(client: OpenAI, model: str, messages: list[dict]):
+    """Call the Groq chat API with exponential backoff on 429 errors."""
+    for attempt in range(_MAX_RETRIES):
+        try:
+            return client.chat.completions.create(
+                model=model,
+                messages=messages,
+                response_format={"type": "json_object"},
+                temperature=0.3,
+            )
+        except RateLimitError as exc:
+            wait = _BASE_DELAY * (2 ** attempt)
+            logger.warning(
+                "Rate-limited (attempt %d/%d) on %s — waiting %ds: %s",
+                attempt + 1, _MAX_RETRIES, model, wait, exc,
+            )
+            if attempt < _MAX_RETRIES - 1:
+                time.sleep(wait)
+        except Exception as exc:
+            logger.error("Groq API error on %s: %s", model, exc)
+            return None
+    return None
+
+
 def recommend_resources(
     parsed: ParsedSyllabus,
     plan: StudyPlan | None = None,
@@ -213,34 +240,19 @@ def recommend_resources(
     for turn in range(MAX_AGENT_TURNS):
         logger.info("Resource agent — turn %d", turn + 1)
 
-        # Rate-limit pause (Groq free tier)
+        # Rate-limit pause (Groq free tier: ~30 req/min)
         if turn > 0:
-            time.sleep(3)
+            time.sleep(_BASE_DELAY)
 
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                response_format={"type": "json_object"},
-                temperature=0.3,
-            )
-        except Exception as exc:
-            logger.warning("Groq API error with %s: %s — trying fallback", model, exc)
-            if model == GROQ_MODEL:
-                model = GROQ_FALLBACK_MODEL
-                time.sleep(2)
-                try:
-                    response = client.chat.completions.create(
-                        model=model,
-                        messages=messages,
-                        response_format={"type": "json_object"},
-                        temperature=0.3,
-                    )
-                except Exception as exc2:
-                    logger.error("Fallback model also failed: %s", exc2)
-                    raise
-            else:
-                raise
+        response = _llm_call_with_retry(client, model, messages)
+        if response is None and model == GROQ_MODEL:
+            logger.warning("Primary model rate-limited — switching to fallback")
+            model = GROQ_FALLBACK_MODEL
+            time.sleep(_BASE_DELAY)
+            response = _llm_call_with_retry(client, model, messages)
+        if response is None:
+            logger.error("All models rate-limited after retries")
+            break
 
         content = response.choices[0].message.content or ""
         messages.append({"role": "assistant", "content": content})

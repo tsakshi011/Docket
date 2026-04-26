@@ -214,14 +214,21 @@ def _format_results(data: dict) -> str:
 # ---------------------------------------------------------------------------
 AGENT_SEED = os.getenv("AGENT_SEED", "docket-study-resource-agent-default-seed")
 AGENT_PORT = int(os.getenv("AGENT_PORT", "8001"))
+AGENT_ENDPOINT = os.getenv("AGENT_ENDPOINT", "")
 
-agent = Agent(
-    name="docket-study-resources",
-    seed=AGENT_SEED,
-    port=AGENT_PORT,
-    mailbox=True,
-    publish_agent_details=True,
-)
+# Use direct endpoint (via ngrok) if provided, otherwise fall back to mailbox
+_agent_kwargs: dict = {
+    "name": "docket-study-resources",
+    "seed": AGENT_SEED,
+    "port": AGENT_PORT,
+    "publish_agent_details": True,
+}
+if AGENT_ENDPOINT:
+    _agent_kwargs["endpoint"] = [f"{AGENT_ENDPOINT}/submit"]
+else:
+    _agent_kwargs["mailbox"] = True
+
+agent = Agent(**_agent_kwargs)
 
 protocol = Protocol(spec=chat_protocol_spec)
 

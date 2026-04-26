@@ -1,8 +1,11 @@
+import logging
 from datetime import datetime, timedelta
 
 import httpx
 
 from app.models.schemas import SyllabusEvent, StudyBlock
+
+logger = logging.getLogger(__name__)
 
 CALENDAR_API = "https://www.googleapis.com/calendar/v3"
 
@@ -79,13 +82,21 @@ async def create_calendar(
 async def insert_event(
     calendar_id: str, event_body: dict, token: str, client: httpx.AsyncClient,
 ) -> dict:
+    logger.info(
+        "Creating event: %s  |  start=%s  end=%s",
+        event_body.get("summary"),
+        event_body.get("start", {}).get("dateTime"),
+        event_body.get("end", {}).get("dateTime"),
+    )
     resp = await client.post(
         f"{CALENDAR_API}/calendars/{calendar_id}/events",
         headers=_headers(token),
         json=event_body,
     )
     resp.raise_for_status()
-    return resp.json()
+    result = resp.json()
+    logger.info("  -> created: id=%s status=%s", result.get("id"), result.get("status"))
+    return result
 
 
 async def export_plan_to_google_calendar(

@@ -68,6 +68,7 @@ export async function exportToGoogleCalendar(
 export interface UserDataResponse {
   courses: { name: string; data: ParseResponse }[];
   task_progress: Record<string, { completed_items: string[]; custom_tasks: { id: string; text: string; completed: boolean }[] }>;
+  cold_calls: Record<string, string>;
 }
 
 export async function fetchUserCourses(uid: string): Promise<UserDataResponse> {
@@ -99,4 +100,12 @@ export async function saveUserTaskProgress(
     completed_items: completedItems,
     custom_tasks: customTasks,
   });
+}
+
+export async function recordColdCall(uid: string, courseName: string): Promise<string> {
+  const response = await axios.put<{ status: string; date: string }>(`${API_BASE}/user-data/cold-call`, {
+    uid,
+    course_name: courseName,
+  });
+  return response.data.date;
 }

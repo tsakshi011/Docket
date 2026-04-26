@@ -21,6 +21,11 @@ class SaveTaskProgressRequest(BaseModel):
     custom_tasks: list[dict]
 
 
+class ColdCallRequest(BaseModel):
+    uid: str
+    course_name: str
+
+
 @router.get("/{uid}/courses")
 async def get_user_courses(uid: str):
     db = get_db()
@@ -29,10 +34,11 @@ async def get_user_courses(uid: str):
 
     doc = await db.user_data.find_one({"uid": uid}, {"_id": 0})
     if not doc:
-        return {"courses": [], "task_progress": {}}
+        return {"courses": [], "task_progress": {}, "cold_calls": {}}
     return {
         "courses": doc.get("courses", []),
         "task_progress": doc.get("task_progress", {}),
+        "cold_calls": doc.get("cold_calls", {}),
     }
 
 
@@ -111,3 +117,24 @@ async def save_task_progress(req: SaveTaskProgressRequest):
         upsert=True,
     )
     return {"status": "ok"}
+
+
+@router.put("/cold-call")
+async def record_cold_call(req: ColdCallRequest):
+    db = get_db()
+    if db is None:
+        raise HTTPException(status_code=503, detail="Database not configured")
+
+    now = datetime.now(timezone.utc)
+    safe_key = req.course_name.replace(".", "_").replace("$", "_")
+    await db.user_data.update_one(
+        {"uid": req.uid},
+        {
+            "$set": {
+                f"cold_calls.{safe_key}": now.isoformat(),
+                "updated_at": now,
+            }
+        },
+        upsert=True,
+    )
+    return {"status": "ok", "date": now.isoformat()}

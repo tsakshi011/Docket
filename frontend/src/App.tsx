@@ -5,7 +5,7 @@ import HeroSection from './components/HeroSection';
 import FileUpload from './components/FileUpload';
 import StudyPlanView from './components/StudyPlanView';
 import ScheduleView from './components/ScheduleView';
-import { parseSyllabus, exportIcs, exportToGoogleCalendar, fetchUserCourses, saveUserCourse, deleteUserCourse, saveUserTaskProgress } from './api';
+import { parseSyllabus, exportIcs, exportToGoogleCalendar, fetchUserCourses, saveUserCourse, deleteUserCourse, saveUserTaskProgress, recordColdCall } from './api';
 import type { UserDataResponse } from './api';
 import { useAuth } from './useAuth';
 import type { ParseResponse, AppStep, CalendarExportResponse } from './types';
@@ -62,6 +62,7 @@ export default function App() {
   const [gcalResult, setGcalResult] = useState<CalendarExportResponse | null>(null);
 
   const [taskProgress, setTaskProgress] = useState<UserDataResponse['task_progress']>({});
+  const [coldCalls, setColdCalls] = useState<Record<string, string>>({});
 
   const { user, googleAccessToken, signInWithGoogle } = useAuth();
 
@@ -82,6 +83,9 @@ export default function App() {
         }
         if (res.task_progress) {
           setTaskProgress(res.task_progress);
+        }
+        if (res.cold_calls) {
+          setColdCalls(res.cold_calls);
         }
       })
       .catch(() => { /* backend may not be running */ });
@@ -133,6 +137,15 @@ export default function App() {
     if (!data) return undefined;
     const safeKey = data.course_name.replace(/\./g, '_').replace(/\$/g, '_');
     return taskProgress[safeKey];
+  };
+
+  const handleColdCall = (courseName: string) => {
+    const safeKey = courseName.replace(/\./g, '_').replace(/\$/g, '_');
+    const now = new Date().toISOString();
+    setColdCalls((prev) => ({ ...prev, [safeKey]: now }));
+    if (user) {
+      recordColdCall(user.uid, courseName).catch(() => {});
+    }
   };
 
   const handleSubmit = async (f: File) => {
@@ -325,7 +338,7 @@ export default function App() {
 
       {/* Schedule Page */}
       {page === 'schedule' && (
-        <ScheduleView data={data} onNavigate={handleNavigate} onLoadDemo={handleLoadDemo} savedCourses={savedCourses.map((c) => c.name)} onSwitchCourse={switchCourse} />
+        <ScheduleView data={data} onNavigate={handleNavigate} onLoadDemo={handleLoadDemo} savedCourses={savedCourses.map((c) => c.name)} onSwitchCourse={switchCourse} coldCalls={coldCalls} onColdCall={handleColdCall} />
       )}
     </div>
   );

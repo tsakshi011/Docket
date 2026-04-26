@@ -1,26 +1,17 @@
-"""Agentic resource-routing engine using a ReAct-style JSON action loop.
+"""ReAct-style JSON action loop.
 
-How it works
-------------
-1. We build a system prompt that describes the agent's goal, the available
-   tools, and the JSON schema it must ultimately produce.
+1. Prompt that describes goal, the available
+   tools, and the JSON schema needs to produce.
 2. The agent runs in a loop — each turn the LLM outputs a JSON object with
    an ``action`` and ``action_input``:
        Thought  → decide what information is still missing
        Action   → {"action": "search_youtube", "action_input": {"query": "..."}}
        Observe  → we execute the tool and feed results back
        …repeat until the agent outputs {"action": "finish", ...}
-3. We parse the final JSON into a ``ResourceRecommendations`` Pydantic model.
-
-This is what makes the agent *agentic*:
-  • It autonomously decides WHICH tools to call based on the syllabus content
-  • It iterates — if a search returns poor results it can try a different query
-  • It self-evaluates — it checks coverage per topic before finishing
-  • It dynamically routes — a math syllabus triggers different searches than
-    a history syllabus
-
-We use a JSON-based action format (instead of native function-calling) so the
-agent works reliably across all Groq model variants.
+    Decides which tools to call based on the syllabus content.
+    Self-evaluation by checkign coverate of topic before finishing.
+    Triggers differen searches based on subject domain
+3.Parse the final JSON into a ``ResourceRecommendations`` Pydantic model.
 """
 
 from __future__ import annotations

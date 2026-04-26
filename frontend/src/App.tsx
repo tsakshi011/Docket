@@ -351,7 +351,7 @@ export default function App() {
         <div className="flex flex-col items-center pt-16 gap-6 px-4">
           <h2 className="flex items-center text-5xl font-bold text-[#485C11]" style={{ fontFamily: '"Nimbus Roman No9 L", "Times New Roman", Georgia, serif' }}>
             <span>Pomo</span>
-            <img src="/src/assets/docket-logo-d.png" alt="d" className="h-[4.5rem] -mr-6" style={{ marginTop: '6px', marginLeft: '-1rem' }} />
+            <img src="/src/assets/docket-logo-d.png" alt="d" className="h-[4.5rem] -mr-6" style={{ marginTop: '2px', marginLeft: '-1rem' }} />
             <span>oro</span>
           </h2>
           <PomodoroTimer />

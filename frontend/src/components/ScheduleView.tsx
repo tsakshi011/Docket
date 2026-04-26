@@ -5,6 +5,8 @@ interface ScheduleViewProps {
   data: ParseResponse | null;
   onNavigate: (page: string) => void;
   onLoadDemo?: () => void;
+  savedCourses?: string[];
+  onSwitchCourse?: (name: string) => void;
 }
 
 const EVENT_ICONS: Record<string, typeof BookOpen> = {
@@ -34,31 +36,68 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
-export default function ScheduleView({ data, onNavigate, onLoadDemo }: ScheduleViewProps) {
+export default function ScheduleView({ data, onNavigate, onLoadDemo, savedCourses, onSwitchCourse }: ScheduleViewProps) {
   if (!data) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center space-y-4">
           <h2 className="font-[Inter] text-3xl font-bold text-[#485C11]">Schedule</h2>
-          <p className="text-[#485C11]/70 max-w-md">
-            Your schedule will appear here once you upload a syllabus and generate a study plan.
-          </p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => onNavigate('upload')}
-              className="px-6 py-2.5 bg-[#485C11] text-white rounded-full font-medium hover:bg-[#3a4a0d] transition-colors"
-            >
-              Upload Syllabus
-            </button>
-            {onLoadDemo && (
-              <button
-                onClick={onLoadDemo}
-                className="px-6 py-2.5 border-2 border-[#485C11] text-[#485C11] rounded-full font-medium hover:bg-[#485C11]/10 transition-colors"
-              >
-                Load Demo
-              </button>
-            )}
-          </div>
+          {savedCourses && savedCourses.length > 0 ? (
+            <>
+              <p className="text-[#485C11]/70 max-w-md">
+                Your saved courses:
+              </p>
+              <div className="space-y-2 max-w-md mx-auto">
+                {savedCourses.map((name) => (
+                  <button
+                    key={name}
+                    onClick={() => onSwitchCourse?.(name)}
+                    className="w-full px-6 py-3 bg-[#FFFBF1] text-[#485C11] rounded-xl font-medium hover:bg-[#F5EDD6] transition-colors text-left border border-[#485C11]/10"
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-3 justify-center pt-2">
+                <button
+                  onClick={() => onNavigate('upload')}
+                  className="px-6 py-2.5 bg-[#485C11] text-white rounded-full font-medium hover:bg-[#3a4a0d] transition-colors"
+                >
+                  Upload New Syllabus
+                </button>
+                {onLoadDemo && (
+                  <button
+                    onClick={onLoadDemo}
+                    className="px-6 py-2.5 border-2 border-[#485C11] text-[#485C11] rounded-full font-medium hover:bg-[#485C11]/10 transition-colors"
+                  >
+                    Load Demo
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-[#485C11]/70 max-w-md">
+                Your schedule will appear here once you upload a syllabus and generate a study plan.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => onNavigate('upload')}
+                  className="px-6 py-2.5 bg-[#485C11] text-white rounded-full font-medium hover:bg-[#3a4a0d] transition-colors"
+                >
+                  Upload Syllabus
+                </button>
+                {onLoadDemo && (
+                  <button
+                    onClick={onLoadDemo}
+                    className="px-6 py-2.5 border-2 border-[#485C11] text-[#485C11] rounded-full font-medium hover:bg-[#485C11]/10 transition-colors"
+                  >
+                    Load Demo
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     );

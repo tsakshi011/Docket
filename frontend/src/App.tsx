@@ -325,7 +325,7 @@ export default function App() {
 
       {/* Schedule Page */}
       {page === 'schedule' && (
-        <ScheduleView data={data} onNavigate={handleNavigate} onLoadDemo={handleLoadDemo} />
+        <ScheduleView data={data} onNavigate={handleNavigate} onLoadDemo={handleLoadDemo} savedCourses={savedCourses.map((c) => c.name)} onSwitchCourse={switchCourse} />
       )}
     </div>
   );

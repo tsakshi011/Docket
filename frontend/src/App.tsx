@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import NavBar from './components/NavBar';
 import HeroSection from './components/HeroSection';
 import FileUpload from './components/FileUpload';
@@ -15,14 +15,9 @@ interface SavedCourse {
   data: ParseResponse;
 }
 
-const ANON_KEY = 'docket_courses';
-function storageKey(uid?: string) {
-  return uid ? `docket_courses_${uid}` : ANON_KEY;
-}
-
-function loadSavedCourses(uid?: string): SavedCourse[] {
+function loadSavedCourses(): SavedCourse[] {
   try {
-    const raw = localStorage.getItem(storageKey(uid));
+    const raw = localStorage.getItem('docket_courses');
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -39,38 +34,11 @@ export default function App() {
   const [gcalExporting, setGcalExporting] = useState(false);
   const [gcalResult, setGcalResult] = useState<CalendarExportResponse | null>(null);
 
-  const { user, googleAccessToken, signInWithGoogle } = useAuth();
-  const prevUidRef = useRef<string | undefined>(undefined);
+  const { googleAccessToken, signInWithGoogle } = useAuth();
 
-  // When user signs in/out, load their courses (and migrate anonymous data on sign-in)
   useEffect(() => {
-    const uid = user?.uid;
-    if (uid === prevUidRef.current) return;
-    prevUidRef.current = uid;
-
-    if (uid) {
-      const userCourses = loadSavedCourses(uid);
-      const anonCourses = loadSavedCourses();
-
-      // Merge anonymous courses into user's courses (user's take priority on name conflict)
-      const merged = [...userCourses];
-      const existingNames = new Set(merged.map((c) => c.name));
-      for (const c of anonCourses) {
-        if (!existingNames.has(c.name)) merged.push(c);
-      }
-
-      setSavedCourses(merged);
-      localStorage.setItem(storageKey(uid), JSON.stringify(merged));
-      localStorage.removeItem(ANON_KEY);
-    } else {
-      setSavedCourses(loadSavedCourses());
-    }
-  }, [user]);
-
-  // Persist courses to the correct storage key
-  useEffect(() => {
-    localStorage.setItem(storageKey(user?.uid), JSON.stringify(savedCourses));
-  }, [savedCourses, user]);
+    localStorage.setItem('docket_courses', JSON.stringify(savedCourses));
+  }, [savedCourses]);
 
   const saveCourse = (courseData: ParseResponse) => {
     setSavedCourses((prev) => {

@@ -74,6 +74,7 @@ class StudyPlan(BaseModel):
     study_blocks: list[StudyBlock] = []
     weekly_summary: list[str] = [] # high-level per-week summary
     warnings: list[str] = [] # e.g., "Heavy week: 3 deadlines on Nov 10-14"
+    resources: Optional["ResourceRecommendations"] = None
 
 
 class ParseRequest(BaseModel):
@@ -89,6 +90,30 @@ class ParseResponse(BaseModel):
     weekly_summary: list[str]
     warnings: list[str]
     raw_text_preview: str
+    resources: Optional["ResourceRecommendations"] = None
+
+
+class StudyResource(BaseModel):
+    title: str
+    url: str | None = None
+    resource_type: str  # video, textbook, practice, article, tool, course
+    platform: str
+    relevance: str
+    priority: str = "medium"  # high, medium, low
+
+
+class TopicResources(BaseModel):
+    topic: str
+    related_events: list[str] = []
+    resources: list[StudyResource] = []
+
+
+class ResourceRecommendations(BaseModel):
+    course_name: str
+    subject_domain: str
+    general_resources: list[StudyResource] = []
+    topic_resources: list[TopicResources] = []
+    study_tips: list[str] = []
 
 
 class CalendarExportRequest(BaseModel):
@@ -102,3 +127,14 @@ class CalendarExportResponse(BaseModel):
     calendar_id: str
     calendar_url: str
     events_created: int
+
+
+class ResourceRequest(BaseModel):
+    course_name: str
+    semester: str
+    events: list[SyllabusEvent]
+
+
+# Rebuild forward refs so StudyPlan / ParseResponse can reference ResourceRecommendations
+StudyPlan.model_rebuild()
+ParseResponse.model_rebuild()

@@ -329,11 +329,13 @@ Generate an optimal study plan with preparation blocks for each event. Break dow
 
 
 def run_agent_pipeline(syllabus_text: str) -> StudyPlan:
-    """Full agentic pipeline: Extract → Reason → Plan."""
+    """Full agentic pipeline: Extract → Reason → Plan → Recommend Resources."""
+    from app.services.resource_agent import recommend_resources
+
     # Step 1: Extract events from syllabus
     parsed = extract_events(syllabus_text)
 
-    # Pause between pipeline steps Groq's TPM rate limit.
+    # Pause between pipeline steps for Groq's TPM rate limit.
     time.sleep(15)
 
     # Step 2: Generate autonomous study plan
@@ -341,5 +343,17 @@ def run_agent_pipeline(syllabus_text: str) -> StudyPlan:
 
     # Ensure the original syllabus events are included
     plan.syllabus_events = parsed.events
+
+    # Step 3: Agentic resource routing
+    time.sleep(5)
+    try:
+        plan.resources = recommend_resources(parsed, plan)
+        logger.info(
+            "Resource agent found %d topic(s) with resources",
+            len(plan.resources.topic_resources),
+        )
+    except Exception as exc:
+        logger.warning("Resource agent failed (non-fatal): %s", exc)
+        # Don't break the pipeline — resources are optional
 
     return plan

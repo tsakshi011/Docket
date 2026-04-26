@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { ParseResponse, CalendarExportRequest, CalendarExportResponse } from './types';
+import type { ParseResponse, CalendarExportRequest, CalendarExportResponse, ResourceRecommendations, SyllabusEvent } from './types';
 
 const API_BASE = import.meta.env.PROD
   ? 'https://syllabus-to-calendar-vfegtvvl.fly.dev/api'
@@ -101,6 +101,19 @@ export async function saveUserTaskProgress(
     completed_items: completedItems,
     custom_tasks: customTasks,
   });
+}
+
+export async function recommendResources(
+  courseName: string,
+  semester: string,
+  events: SyllabusEvent[],
+): Promise<ResourceRecommendations> {
+  const response = await axios.post<ResourceRecommendations>(
+    `${API_BASE}/resources/recommend`,
+    { course_name: courseName, semester, events },
+    { timeout: 120000 },
+  );
+  return response.data;
 }
 
 export async function recordColdCall(uid: string, courseName: string): Promise<string> {

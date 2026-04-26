@@ -19,7 +19,8 @@ import {
 } from 'lucide-react';
 import type { ParseResponse, StudyBlock } from '../types';
 import starImg from '../assets/star.png';
-import { generateGcalLink } from '../api';
+import { generateGcalLink, recommendResources } from '../api';
+import ResourcePanel from './ResourcePanel';
 
 interface TaskProgressData {
   completed_items: string[];
@@ -92,11 +93,13 @@ interface TaskItem {
 
 export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExporting, gcalResult, onReset, savedCourses, onSwitchCourse, onDeleteCourse, initialTaskProgress, onTaskProgressChange, coldCallDate, onColdCall }: StudyPlanViewProps) {
   const [showStudyBlocks, setShowStudyBlocks] = useState(true);
-  const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks' | 'tasks'>('timeline');
+  const [activeTab, setActiveTab] = useState<'timeline' | 'events' | 'blocks' | 'tasks' | 'resources'>('timeline');
   const [tasks, setTasks] = useState<TaskItem[]>(initialTaskProgress?.custom_tasks ?? []);
   const [newTask, setNewTask] = useState('');
   const [completedItems, setCompletedItems] = useState<Set<string>>(new Set(initialTaskProgress?.completed_items ?? []));
   const initialized = useRef(false);
+  const [resourceRefreshing, setResourceRefreshing] = useState(false);
+  const [localResources, setLocalResources] = useState(data.resources ?? null);
 
   // Re-initialize when initialTaskProgress changes (e.g. switching courses)
   useEffect(() => {
@@ -106,6 +109,28 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
     }
     initialized.current = true;
   }, [data.course_name]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync resources when data changes (course switch or fresh parse)
+  useEffect(() => {
+    setLocalResources(data.resources ?? null);
+  }, [data.course_name, data.resources]);
+
+  const handleRefreshResources = async () => {
+    setResourceRefreshing(true);
+    try {
+      const result = await recommendResources(
+        data.course_name,
+        data.semester,
+        data.syllabus_events,
+      );
+      setLocalResources(result);
+    } catch {
+      // silently fail — user can try again
+    } finally {
+      setResourceRefreshing(false);
+    }
+  };
+
   const [showCourseDropdown, setShowCourseDropdown] = useState(false);
 
   const notifyProgress = (newCompleted: Set<string>, newTasks: TaskItem[]) => {
@@ -300,7 +325,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
 
       {/* Tabs */}
       <div className="flex border-b">
-        {(['timeline', 'events', 'blocks', 'tasks'] as const).map((tab) => (
+        {(['timeline', 'events', 'blocks', 'tasks', 'resources'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -310,7 +335,7 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            {tab === 'timeline' ? `Timeline${completedItems.size > 0 ? ` (${completedItems.size}/${allItems.length})` : ''}` : tab === 'events' ? `Events (${(data.syllabus_events ?? []).length})` : tab === 'blocks' ? `Study Plan (${(data.study_blocks ?? []).length})` : `Tasks (${allCompletedCount}/${allTaskCount})`}
+            {tab === 'timeline' ? `Timeline${completedItems.size > 0 ? ` (${completedItems.size}/${allItems.length})` : ''}` : tab === 'events' ? `Events (${(data.syllabus_events ?? []).length})` : tab === 'blocks' ? `Study Plan (${(data.study_blocks ?? []).length})` : tab === 'resources' ? `Resources${localResources ? ` (${localResources.general_resources.length + localResources.topic_resources.reduce((a, t) => a + t.resources.length, 0)})` : ''}` : `Tasks (${allCompletedCount}/${allTaskCount})`}
           </button>
         ))}
       </div>
@@ -582,6 +607,29 @@ export default function StudyPlanView({ data, onExportIcs, onExportGcal, gcalExp
             ))}
           </ul>
         </div>
+      )}
+
+      {/* Resources tab */}
+      {activeTab === 'resources' && (
+        localResources ? (
+          <ResourcePanel
+            resources={localResources}
+            onRefresh={handleRefreshResources}
+            refreshing={resourceRefreshing}
+          />
+        ) : (
+          <div className="text-center py-12 space-y-3">
+            <BookOpen className="w-10 h-10 text-[#485C11]/20 mx-auto" />
+            <p className="text-sm text-[#485C11]/60">No resources loaded yet for this course.</p>
+            <button
+              onClick={handleRefreshResources}
+              disabled={resourceRefreshing}
+              className="px-4 py-2 bg-[#485C11] text-white text-sm rounded-full hover:bg-[#3a4a0d] transition-colors disabled:opacity-50"
+            >
+              {resourceRefreshing ? 'Searching for resources...' : 'Find Study Resources'}
+            </button>
+          </div>
+        )
       )}
 
       {/* Weekly Summary */}

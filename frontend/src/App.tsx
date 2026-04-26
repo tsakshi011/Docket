@@ -25,7 +25,7 @@ export default function App() {
       const result = await parseSyllabus(f);
       setData(result);
       setStep('review');
-      setPage('schedule');
+      setPage('upload');
     } catch (err: unknown) {
       const message =
         err instanceof Error

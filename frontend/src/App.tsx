@@ -5,6 +5,7 @@ import HeroSection from './components/HeroSection';
 import FileUpload from './components/FileUpload';
 import StudyPlanView from './components/StudyPlanView';
 import ScheduleView from './components/ScheduleView';
+import PomodoroTimer from './components/PomodoroTimer';
 import { parseSyllabus, exportIcs, exportToGoogleCalendar, fetchUserCourses, saveUserCourse, deleteUserCourse, saveUserTaskProgress, recordColdCall } from './api';
 import type { UserDataResponse } from './api';
 import { useAuth } from './useAuth';
@@ -35,7 +36,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-type Page = 'home' | 'upload' | 'schedule';
+type Page = 'home' | 'upload' | 'schedule' | 'pomodoro';
 
 interface SavedCourse {
   name: string;
@@ -268,6 +269,8 @@ export default function App() {
       setPage('upload');
     } else if (target === 'schedule') {
       setPage('schedule');
+    } else if (target === 'pomodoro') {
+      setPage('pomodoro');
     }
   };
 
@@ -341,6 +344,14 @@ export default function App() {
       {/* Schedule Page */}
       {page === 'schedule' && (
         <ScheduleView data={data} onNavigate={handleNavigate} onLoadDemo={handleLoadDemo} savedCourses={savedCourses.map((c) => c.name)} onSwitchCourse={switchCourse} />
+      )}
+
+      {/* Pomodoro Page */}
+      {page === 'pomodoro' && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-4">
+          <h2 className="font-[Inter] text-3xl font-bold text-[#485C11]">Pomodoro</h2>
+          <PomodoroTimer />
+        </div>
       )}
     </div>
   );

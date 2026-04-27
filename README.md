@@ -4,10 +4,6 @@
 
 Upload your course syllabus (PDF) and our AI agent doesn't just extract dates — it *reasons* about how to break down every assignment, schedules study sessions before exams, and builds a personalized academic plan you can export to Google Calendar.
 
-## How It's Agentic
-
-Traditional automation: "Read dates from PDF → put them on calendar."
-
 **Docket's AI agent:**
 1. **Extracts** all events from unstructured syllabus text (handles tables, relative dates like "Week 5", ambiguous references)
 2. **Reasons** about each assignment — a research paper gets broken into: topic selection → research → outline → first draft → revision → final review

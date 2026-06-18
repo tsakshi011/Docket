@@ -19,3 +19,4 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx"]
+agentverse = ["uagents>=0.24.0"]
